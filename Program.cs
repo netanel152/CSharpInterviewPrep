@@ -81,13 +81,9 @@ static void RunAdvancedProblemsExercises()
     Console.WriteLine("Async operation completed. User data processed.");
 
     // Example of using the NaiveCounter, InterLockCounter, and LockCounter
-    var naiveCounter = new NaiveCounter();
-    var interLockCounter = new InterLockCounter();
-    var lockCounter = new LockCounter();
-    naiveCounter.Increment();
-    interLockCounter.Increment();
-    lockCounter.Increment();
-    Console.WriteLine($"NaiveCounter: {naiveCounter.GetValue().ToString()}, InterLockCounter: {interLockCounter.GetValue().ToString()}, LockCounter: {lockCounter.GetValue().ToString()}");
+    DemonstrateRaceCondition();
+
+    Console.WriteLine("---------------------------------\n");
 
     // Example of using the NotificationService with multiple senders
     var notificationSenders = new List<INotificationSender>

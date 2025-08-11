@@ -52,6 +52,48 @@ namespace CSharpInterviewPrep
             }
         }
 
+        public static void DemonstrateRaceCondition()
+        {
+            Console.WriteLine("\n--- Demonstrating Race Condition ---");
+
+            var naiveCounter = new NaiveCounter();
+            RunCounterInParallel(naiveCounter.Increment);
+            Console.WriteLine($"Naive Counter Final Value: {naiveCounter.GetValue()} (Expected 1,000,000, but it's not!)");
+
+            var lockCounter = new LockCounter();
+            RunCounterInParallel(lockCounter.Increment);
+            Console.WriteLine($"Lock Counter Final Value: {lockCounter.GetValue()} (Correct!)");
+
+            var interLockCounter = new InterLockCounter();
+            RunCounterInParallel(interLockCounter.Increment);
+            Console.WriteLine($"Lock Counter Final Value: {lockCounter.GetValue()} (Correct!)");
+        }
+
+        private static void RunCounterInParallel(Action incrementAction)
+        {
+            const int numThreads = 10;
+            const int incrementsPerThread = 100_000;
+            var threadsList = new List<Thread>();
+
+            for (int i = 0; i < numThreads; i++)
+            {
+                var thread = new Thread(() =>
+                {
+                    for (int j = 0; j < incrementsPerThread; j++)
+                    {
+                        incrementAction();
+                    }
+                });
+                threadsList.Add(thread);
+                thread.Start();
+            }
+
+            foreach (var thread in threadsList)
+            {
+                thread.Join(); // Wait for all threadsList to complete
+            }
+        }
+
         public class AsyncDataProcessor
         {
             // Simulates a slow API call
