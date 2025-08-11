@@ -1,4 +1,6 @@
-﻿namespace CSharpInterviewPrep.Day2
+﻿using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep
 {
     public static class ProblemSolving
     {
@@ -21,8 +23,8 @@
             {
                 return false;
             }
-            string sortedStr1 = String.Concat(str1.OrderBy(c => c));
-            string sortedStr2 = String.Concat(str2.OrderBy(c => c));
+            string sortedStr1 = string.Concat(str1.OrderBy(c => c));
+            string sortedStr2 = string.Concat(str2.OrderBy(c => c));
             var isAnagram = sortedStr1.Equals(sortedStr2);
             return isAnagram;
         }
@@ -131,14 +133,9 @@
     public class Document
     {
         public int Id { get; set; }
-        public required string Content { get; set; }
+        public string? Content { get; set; }
         public DateTime CreatedAt { get; set; }
-    }
-
-    public class FileMetadata
-    {
-        public required string FilePath { get; set; }
-        public required string FileHash { get; set; } // "a1b2c3d4..."
+        public Dictionary<string, string> Fields { get; set; } = new();
     }
 
     public class ShoppingCart
@@ -158,17 +155,6 @@
         public decimal GetTotalPrice()
         {
             return _items.Sum(item => item.Price);
-        }
-    }
-
-    public class Item
-    {
-        public string Name { get; set; }
-        public decimal Price { get; set; }
-        public Item(string name, decimal price)
-        {
-            Name = name;
-            Price = price;
         }
     }
 }

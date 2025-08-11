@@ -1,13 +1,14 @@
-﻿namespace CSharpInterviewPrep.Day1
+﻿using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep
 {
-    public static class DataStructuresAndLinq
+    public static class CoreConcepts
     {
         public static Dictionary<char, int> CountCharcters(string input)
         {
             var characterCount = new Dictionary<char, int>();
             foreach (char character in input)
             {
-                //if the char is not space dont count him
                 if (char.IsWhiteSpace(character))
                 {
                     continue;
@@ -46,8 +47,4 @@
         }
 
     }
-
-    public class Product { public int Id { get; set; } public string Name { get; set; } }
-    public class Order { public string Category { get; set; } public decimal Price { get; set; } }
-    public class Student { public string Name { get; set; } public int Grade { get; set; } }
 }
