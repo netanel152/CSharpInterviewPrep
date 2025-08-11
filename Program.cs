@@ -72,4 +72,12 @@ static void RunDay3Exercises()
     }
 
     Console.WriteLine("---------------------------------\n");
+
+    //AsyncDataProcessor example for demonstration
+    var asyncProcessor = new AsyncDataProcessor();
+    var asyncProcessUserDataAsync = asyncProcessor.ProcessUserDataAsync(123);
+
+    asyncProcessUserDataAsync.Wait(); // Wait for the async operation to complete
+    Console.WriteLine("Async operation completed. User data processed.");            
+
 }

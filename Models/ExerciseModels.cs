@@ -37,5 +37,12 @@ namespace CSharpInterviewPrep.Models
         {
             public List<string> MemberOfGroups { get; set; } = new();
         }
+
+        public class UserProfile
+        {
+            public string? Name { get; set; }
+            public List<string>? Permissions { get; set; }
+            public List<string>? RecentActivity { get; set; }
+        }
     }
 }
