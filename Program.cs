@@ -4,14 +4,14 @@ using static CSharpInterviewPrep.Models.ExerciseModels;
 
 Console.WriteLine("--- C# Interview Prep Exercises ---\n");
 
-RunDay1Exercises();
-RunDay2Exercises();
-RunDay3Exercises();
+RunCoreCSharpConcepts();
+RunProblemSolvingExercises();
+RunAdvancedProblemsExercises();
 
 Console.WriteLine("\n--- All exercises completed successfully! ---");
 
 
-static void RunDay1Exercises()
+static void RunCoreCSharpConcepts()
 {
     Console.WriteLine("--- Core C# Concepts ---");
 
@@ -27,7 +27,7 @@ static void RunDay1Exercises()
     Console.WriteLine("---------------------------------\n");
 }
 
-static void RunDay2Exercises()
+static void RunProblemSolvingExercises()
 {
     Console.WriteLine("--- Problem Solving ---");
 
@@ -42,7 +42,7 @@ static void RunDay2Exercises()
     Console.WriteLine("---------------------------------\n");
 }
 
-static void RunDay3Exercises()
+static void RunAdvancedProblemsExercises()
 {
     Console.WriteLine("--- Advanced Problems (Product-focused) ---");
 
@@ -78,6 +78,26 @@ static void RunDay3Exercises()
     var asyncProcessUserDataAsync = asyncProcessor.ProcessUserDataAsync(123);
 
     asyncProcessUserDataAsync.Wait(); // Wait for the async operation to complete
-    Console.WriteLine("Async operation completed. User data processed.");            
+    Console.WriteLine("Async operation completed. User data processed.");
 
+    // Example of using the NaiveCounter, InterLockCounter, and LockCounter
+    var naiveCounter = new NaiveCounter();
+    var interLockCounter = new InterLockCounter();
+    var lockCounter = new LockCounter();
+    naiveCounter.Increment();
+    interLockCounter.Increment();
+    lockCounter.Increment();
+    Console.WriteLine($"NaiveCounter: {naiveCounter.GetValue().ToString()}, InterLockCounter: {interLockCounter.GetValue().ToString()}, LockCounter: {lockCounter.GetValue().ToString()}");
+
+    // Example of using the NotificationService with multiple senders
+    var notificationSenders = new List<INotificationSender>
+    {
+        new EmailSender(),
+        new SmsSender(),
+        new WhatsAppSender()
+    };
+
+    var notificationService = new NotificationService(notificationSenders);
+    var response = notificationService.SendAllNotificationsAsync("someUser", "Your order has shipped!");
+    response.Wait();
 }
