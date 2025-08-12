@@ -72,7 +72,8 @@ static async Task RunAdvancedTopics()
     Console.WriteLine("--- Demonstrating Flexible Notification System ---");
     var emailSender = new EmailSender();
     var smsSender = new SmsSender();
-    var notificationService = new NotificationService(new List<INotificationSender> { emailSender, smsSender });
+    var whatsappSender = new WhatsAppSender();
+    var notificationService = new NotificationService(new List<INotificationSender> { emailSender, smsSender, whatsappSender });
     await notificationService.SendAllNotificationsAsync("user123", "Your order has been shipped!");
 
 

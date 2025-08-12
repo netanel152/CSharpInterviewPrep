@@ -22,18 +22,25 @@ public static class A_CoreConcepts
 
     public static List<int> FilterAndDoubleEvens(List<int> numbers)
     {
-        return numbers.Where(n => n % 2 == 0).Select(n => n * 2).ToList();
+        return numbers
+            .Where(n => n % 2 == 0)
+            .Select(n => n * 2)
+            .ToList();
     }
 
     public static Dictionary<string, decimal> GetSalesByCategory(List<Order> orders)
     {
         return orders
             .GroupBy(o => o.Category)
-            .ToDictionary(g => g.Key, g => g.Sum(o => o.Price));
+            .ToDictionary(g => g.Key, g => g
+            .Sum(o => o.Price));
     }
 
     public static List<Student> GetTopStudents(List<Student> students)
     {
-        return students.OrderByDescending(s => s.Grade).Take(3).ToList();
+        return students
+            .OrderByDescending(s => s.Grade)
+            .Take(3)
+            .ToList();
     }
 }

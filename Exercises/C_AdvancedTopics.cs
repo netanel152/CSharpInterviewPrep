@@ -31,7 +31,7 @@ public class LockCounter
 }
 public class InterlockedCounter
 {
-    private int _value = 0; 
+    private int _value = 0;
     public void Increment()
     {
         Interlocked.Increment(ref _value);
@@ -75,6 +75,7 @@ public class EmailSender : INotificationSender
         Console.WriteLine($"EMAIL sent to {userId}: {message}"); return Task.CompletedTask;
     }
 }
+
 public class SmsSender : INotificationSender
 {
     public Task SendAsync(string userId, string message)
@@ -82,6 +83,14 @@ public class SmsSender : INotificationSender
         Console.WriteLine($"SMS sent to {userId}: {message}"); return Task.CompletedTask;
     }
 }
+public class WhatsAppSender : INotificationSender
+{
+    public Task SendAsync(string userId, string message)
+    {
+        Console.WriteLine($"WhatsApp sent to {userId}: {message}"); return Task.CompletedTask;
+    }
+}
+
 public class NotificationService
 {
     private readonly IEnumerable<INotificationSender> _senders;
@@ -174,6 +183,10 @@ public static class C_AdvancedTopics
             threads.Add(thread);
             thread.Start();
         }
-        foreach (var thread in threads) { thread.Join(); }
+
+        foreach (var thread in threads)
+        {
+            thread.Join();
+        }
     }
 }
