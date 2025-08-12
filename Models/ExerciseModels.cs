@@ -1,17 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CSharpInterviewPrep.Models
+﻿namespace CSharpInterviewPrep.Models
 {
     public class ExerciseModels
     {
-        public class Product { public int Id { get; set; } public required string Name { get; set; } }
-        public class Order { public required string Category { get; set; } public decimal Price { get; set; } }
-        public class Student { public required string Name { get; set; } public int Grade { get; set; } }
-        public class Item { public required string Id { get; set; } public decimal Price { get; set; } }
+        public class Product
+        {
+            public int Id { get; set; }
+            public required string Name { get; set; }
+        }
+        public class Order
+        {
+            public int ProductId { get; set; }
+            public required string Category { get; set; }
+            public decimal Price { get; set; }
+            public decimal TotalWeight { get; internal set; }
+        }
+        public class Student
+        {
+            public required string Name { get; set; }
+            public int Grade { get; set; }
+        }
+        public class Item
+        {
+            public required string Id { get; set; }
+            public decimal Price { get; set; }
+        }
 
         public class FileMetadata
         {

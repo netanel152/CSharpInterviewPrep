@@ -72,7 +72,7 @@ public class EmailSender : INotificationSender
 {
     public Task SendAsync(string userId, string message)
     {
-        Console.WriteLine($"EMAIL sent to {userId}: {message}"); return Task.CompletedTask;
+        Console.WriteLine($"Email sent to {userId}: {message}"); return Task.CompletedTask;
     }
 }
 
@@ -189,4 +189,11 @@ public static class C_AdvancedTopics
             thread.Join();
         }
     }
+
+    public static IEnumerable<Product> GetOrderedProducts(List<Product> allProducts, List<Order> allOrders)
+    {
+        var orderedProducts = new HashSet<int>(allOrders.Select(o => o.ProductId));
+        return allProducts.Where(p => orderedProducts.Contains(p.Id));
+    }
+
 }

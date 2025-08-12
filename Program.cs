@@ -40,7 +40,18 @@ static Task RunCoreConcepts()
     var students = new List<Student> { new() { Name = "Alice", Grade = 95 }, new() { Name = "Bob", Grade = 80 }, new() { Name = "Charlie", Grade = 92 } };
     var topStudents = A_CoreConcepts.GetTopStudents(students);
     Console.WriteLine($"GetTopStudents: Top student is {topStudents.First().Name}.");
+
+    var base64Encoded = A_CoreConcepts.EncodeToBase64("Hello World");
+    Console.WriteLine($"EncodeToBase64: Encoded string is {base64Encoded}.");
+    var decodedText = A_CoreConcepts.DecodeFromBase64(base64Encoded);
+    Console.WriteLine($"DecodeFromBase64: Decoded string is {decodedText}.");
     Console.WriteLine("---------------------------------\n");
+
+    //dmonstration of the PrintFibonacciSeries
+    Console.WriteLine("--- Demonstrating PrintFibonacciSeries ---");
+    A_CoreConcepts.PrintFibonacciSeries(10);
+
+    // demonstration of the ReverseString
     return Task.CompletedTask;
 }
 
@@ -60,6 +71,9 @@ static Task RunProblemSolving()
     {
         Console.WriteLine($"- {word}");
     }
+
+    string rotatedArray = B_ProblemSolving.RotateArray(new[] { 1, 2, 3, 4, 5 }, 2);
+    Console.WriteLine($"RotateArray: Rotated array is {rotatedArray}");
     Console.WriteLine("---------------------------------\n");
     return Task.CompletedTask;
 }
@@ -112,5 +126,60 @@ static async Task RunAdvancedTopics()
     var processor = new AsyncDataProcessor();
     var profile = await processor.ProcessUserDataAsync(123);
     Console.WriteLine($"Fetched profile for: {profile.Name}");
+
+    // Demonstrating GetOrderedProducts
+    Console.WriteLine("--- Demonstrating GetOrderedProducts ---");
+    var products = new List<Product>
+    {
+        new Product { Id = 1, Name = "Laptop" },
+        new Product { Id = 2, Name = "Smartphone"},
+        new Product { Id = 3, Name = "Tablet" }
+    };
+    var orders = new List<Order>
+    {
+        new Order { ProductId = 1, Category = "Electronics", Price = 1000 },
+        new Order { ProductId = 1, Category = "Electronics", Price = 500 },
+        new Order { ProductId = 3, Category = "Electronics", Price = 300 }
+    };
+
+    var orderedProducts = C_AdvancedTopics.GetOrderedProducts(products, orders);
+    Console.WriteLine("Ordered products:");
+    foreach (var product in orderedProducts)
+    {
+        Console.WriteLine($"- {product.Name}");
+    }
+
+    // demonstation of object oriented programming concepts
+    Console.WriteLine("--- Demonstrating Object-Oriented Programming Concepts ---");
+
+    var shippingStrategy = ShippingStrategyFactory.GetStrategy("weight");
+    var order = new Order { TotalWeight = 10.0m, Category = "Books" };
+    var shippingCost = shippingStrategy.CalculateShippingCost(order);
+    Console.WriteLine($"Shipping cost using WeightShippingStrategy: {shippingCost:C}");
+    //var configManager = ConfigurationManager.Instance;
+    //Console.WriteLine($"ConfigurationManager instance created with settings: {string.Join(", ", configManager.Settings.Select(kv => $"{kv.Key}={kv.Value}"))}"); 
+    //Console.WriteLine($"ConfigurationManager instance created with settings: {configManager.Settings.Count} settings loaded.");
+    //Console.WriteLine($"DatabaseConnectionString: {configManager.Settings["DatabaseConnectionString"]}");
+    //Console.WriteLine($"ApiEndpoint: {configManager.Settings["ApiEndpoint"]}");
+    //Console.WriteLine($"CacheTimeout: {configManager.Settings["CacheTimeout"]} seconds");
+
+    // demonstration of the LegacyLogger
+    Console.WriteLine("--- Demonstrating Legacy Logger ---");
+    var legacyLogger = new LegacyLogger();
+    legacyLogger.WriteEntry("This is a log message from the legacy logger.");
+
+
+    Console.WriteLine("Legacy logger has been successfully used to log a message.");
+
+    // demonstration of the ProductEvent
+    var productEvent = new ProductEvent { Price = 100 };
+    var customer1 = new Customer();
+
+    // הלקוח "נרשם" לקבל התראות על שינויים במחיר
+    productEvent.PriceChanged += customer1.OnPriceChanged;
+
+    // שינוי המחיר יפעיל אוטומטית את המתודה של הלקוח
+    productEvent.Price = 90;
+
     Console.WriteLine("---------------------------------\n");
 }

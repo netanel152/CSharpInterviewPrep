@@ -44,4 +44,18 @@ public static class B_ProblemSolving
             .Take(10).Select(kv => kv.Key)
             .ToList();
     }
+
+    public static string RotateArray(int[] arr, int k)
+    {
+        if (arr == null || arr.Length == 0 || k < 0)
+        {
+            throw new ArgumentException("Invalid input array or rotation count.");
+        }
+        k = k % arr.Length; // Handle cases where k is larger than array length
+        if (k == 0) return string.Join(", ", arr);
+        int[] rotatedArray = new int[arr.Length];
+        Array.Copy(arr, arr.Length - k, rotatedArray, 0, k);
+        Array.Copy(arr, 0, rotatedArray, k, arr.Length - k);
+        return string.Join(", ", rotatedArray);
+    }
 }
