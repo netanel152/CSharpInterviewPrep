@@ -1,99 +1,60 @@
-﻿using CSharpInterviewPrep;
-using static CSharpInterviewPrep.AdvancedProblems;
+﻿using CSharpInterviewPrep.Exercises;
+using Microsoft.Extensions.DependencyInjection;
 using static CSharpInterviewPrep.Models.ExerciseModels;
 
 Console.WriteLine("--- C# Interview Prep Exercises ---\n");
 
-RunCoreCSharpConcepts();
-RunProblemSolvingExercises();
-RunAdvancedProblemsExercises();
+// Run all exercise sections in a logical order
+await RunCoreConcepts();
+await RunProblemSolving();
+await RunAdvancedTopics();
 
 Console.WriteLine("\n--- All exercises completed successfully! ---");
 
 
-static void RunCoreCSharpConcepts()
+static Task RunCoreConcepts()
 {
-    Console.WriteLine("--- Core C# Concepts ---");
-
-    // ספירת תווים
-    var charCounts = CoreConcepts.CountCharcters("hello world");
+    Console.WriteLine("--- Section 1: Core C# Concepts ---");
+    var charCounts = A_CoreConcepts.CountCharacters("hello world");
     Console.WriteLine($"CountCharacters('hello world'): {charCounts.Count} distinct chars found.");
 
-    // מיון סטודנטים
     var students = new List<Student> { new() { Name = "Alice", Grade = 95 }, new() { Name = "Bob", Grade = 80 }, new() { Name = "Charlie", Grade = 92 } };
-    var topStudents = CoreConcepts.SortStudentsByGrade(students);
+    var topStudents = A_CoreConcepts.GetTopStudents(students);
     Console.WriteLine($"GetTopStudents: Top student is {topStudents.First().Name}.");
-
     Console.WriteLine("---------------------------------\n");
+    return Task.CompletedTask;
 }
 
-static void RunProblemSolvingExercises()
+static Task RunProblemSolving()
 {
-    Console.WriteLine("--- Problem Solving ---");
-
-    // בדיקת אנאגרמות
-    bool isAnagram = ProblemSolving.AreAnagrams("listen", "silent");
+    Console.WriteLine("--- Section 2: Problem Solving ---");
+    bool isAnagram = B_ProblemSolving.AreAnagrams("listen", "silent");
     Console.WriteLine($"AreAnagrams('listen', 'silent'): {isAnagram}");
 
-    // מציאת כפילות ראשונה
-    int? duplicate = ProblemSolving.FindFirstDuplicate(new[] { 2, 5, 1, 2, 3, 5 });
+    int? duplicate = B_ProblemSolving.FindFirstDuplicate(new[] { 2, 5, 1, 2, 3 });
     Console.WriteLine($"FindFirstDuplicate: Found {duplicate}");
-
     Console.WriteLine("---------------------------------\n");
+    return Task.CompletedTask;
 }
 
-static void RunAdvancedProblemsExercises()
+static async Task RunAdvancedTopics()
 {
-    Console.WriteLine("--- Advanced Problems (Product-focused) ---");
+    Console.WriteLine("--- Section 3: Advanced Topics ---");
 
-    // מסנן הרשאות
-    var user = new User { MemberOfGroups = new List<string> { "Admins", "Sales" } };
-    var results = new List<SearchResult>
-    {
-        new() { Title = "Financial Report", AllowedGroups = new List<string> { "Admins", "Finance" } },
-        new() { Title = "Sales Deck", AllowedGroups = new List<string> { "Sales" } },
-        new() { Title = "Dev Guide", AllowedGroups = new List<string> { "Developers" } }
-    };
-    var permittedResults = AdvancedProblems.FilterResultsByPermissions(results, user);
-    Console.WriteLine($"FilterResultsByPermissions: User can see {permittedResults.Count} out of {results.Count} documents.");
+    // Asynchronous Processing Demo
+    var processor = new AsyncDataProcessor();
+    var profile = await processor.ProcessUserDataAsync(123);
+    Console.WriteLine($"Fetched profile for: {profile.Name}");
 
-    // השלמה אוטומטית
-    var autocomplete = new AutocompleteService(new List<string> {
-        "sales report Q3",
-        "marketing plan",
-        "salary information"
-    });
+    // Dependency Injection & OOP Demo
+    var services = new ServiceCollection();
+    services.AddTransient<INotificationSender, EmailSender>();
+    services.AddTransient<INotificationSender, SmsSender>();
+    services.AddTransient<NotificationService>();
+    var serviceProvider = services.BuildServiceProvider();
 
-    var suggestions = autocomplete.GetSuggestions("sal");
-    Console.WriteLine($"Autocomplete suggestions for 'sal': Found {suggestions.Count} results.");
-    foreach (var suggestion in suggestions)
-    {
-        Console.WriteLine($" - {suggestion}");
-    }
+    var notificationService = serviceProvider.GetRequiredService<NotificationService>();
+    await notificationService.SendAllNotificationsAsync("Natanel", "Your interview is confirmed!");
 
     Console.WriteLine("---------------------------------\n");
-
-    //AsyncDataProcessor example for demonstration
-    var asyncProcessor = new AsyncDataProcessor();
-    var asyncProcessUserDataAsync = asyncProcessor.ProcessUserDataAsync(123);
-
-    asyncProcessUserDataAsync.Wait(); // Wait for the async operation to complete
-    Console.WriteLine("Async operation completed. User data processed.");
-
-    // Example of using the NaiveCounter, InterLockCounter, and LockCounter
-    DemonstrateRaceCondition();
-
-    Console.WriteLine("---------------------------------\n");
-
-    // Example of using the NotificationService with multiple senders
-    var notificationSenders = new List<INotificationSender>
-    {
-        new EmailSender(),
-        new SmsSender(),
-        new WhatsAppSender()
-    };
-
-    var notificationService = new NotificationService(notificationSenders);
-    var response = notificationService.SendAllNotificationsAsync("someUser", "Your order has shipped!");
-    response.Wait();
 }
