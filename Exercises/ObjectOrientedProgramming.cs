@@ -17,7 +17,7 @@ public class WeightShippingStrategy : IShippingStrategy
 
 public class ExpressShippingStrategy : IShippingStrategy
 {
-    public decimal CalculateShippingCost(Order order) => 25.0m;
+    public decimal CalculateShippingCost(Order order) => 25.0m; // מחיר קבוע למשלוח מהיר
 }
 
 public class FreeShippingStrategy : IShippingStrategy
@@ -29,8 +29,7 @@ public class DistanceShippingStrategy : IShippingStrategy
 {
     public decimal CalculateShippingCost(Order order)
     {
-        // נניח שהמרחק הוא 10 קילומטרים
-        const decimal distance = 10.0m;
+        const decimal distance = 10.0m; // נניח שהמרחק הוא 10 קילומטרים
         return distance * 2.0m; // מחיר לקילומטר
     }
 }
@@ -61,7 +60,7 @@ public sealed class ConfigurationManager
 
     private Dictionary<string, string> _settings = new();
 
-    // הקונסטרקטור הוא פרטי כדי למנוע יצירה מבחוץ
+    // הבנאי הוא פרטי כדי למנוע יצירה מבחוץ
     private ConfigurationManager()
     {
         // טוען הגדרות מקובץ או ממקור אחר

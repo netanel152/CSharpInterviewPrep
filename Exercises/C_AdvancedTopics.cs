@@ -7,7 +7,8 @@ namespace CSharpInterviewPrep.Exercises;
 // --- Part 1: Concurrency - Thread Safety ---
 public class NaiveCounter
 {
-    private int _value = 0; public void Increment()
+    private int _value = 0;
+    public void Increment()
     {
         _value++;
     }
@@ -18,7 +19,7 @@ public class NaiveCounter
 }
 public class LockCounter
 {
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private int _value = 0;
     public void Increment()
     {
@@ -45,7 +46,11 @@ public class InterlockedCounter
 // --- Part 2: Concurrency - Asynchronous Programming ---
 public class AsyncDataProcessor
 {
-    private async Task<string> GetUserNameAsync(int userId) { await Task.Delay(1000); return "Natanel Doe"; }
+    private async Task<string> GetUserNameAsync(int userId)
+    {
+        await Task.Delay(1000); return "Natanel Doe";
+    }
+
     private async Task<List<string>> GetUserPermissionsAsync(int userId)
     {
         await Task.Delay(1500); return new List<string> { "read", "write" };
@@ -67,12 +72,17 @@ public class AsyncDataProcessor
 }
 
 // --- Part 3: OOP & System Design - Flexible Notification System ---
-public interface INotificationSender { Task SendAsync(string userId, string message); }
+public interface INotificationSender
+{
+    Task SendAsync(string userId, string message);
+}
+
 public class EmailSender : INotificationSender
 {
     public Task SendAsync(string userId, string message)
     {
-        Console.WriteLine($"Email sent to {userId}: {message}"); return Task.CompletedTask;
+        Console.WriteLine($"Email sent to {userId}: {message}");
+        return Task.CompletedTask;
     }
 }
 
@@ -80,14 +90,16 @@ public class SmsSender : INotificationSender
 {
     public Task SendAsync(string userId, string message)
     {
-        Console.WriteLine($"SMS sent to {userId}: {message}"); return Task.CompletedTask;
+        Console.WriteLine($"SMS sent to {userId}: {message}"); 
+        return Task.CompletedTask;
     }
 }
 public class WhatsAppSender : INotificationSender
 {
     public Task SendAsync(string userId, string message)
     {
-        Console.WriteLine($"WhatsApp sent to {userId}: {message}"); return Task.CompletedTask;
+        Console.WriteLine($"WhatsApp sent to {userId}: {message}");
+        return Task.CompletedTask;
     }
 }
 

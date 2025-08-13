@@ -12,14 +12,14 @@ public static class A_CoreConcepts
         {
             if (char.IsLetter(c))
             {
-                var lowerChar = char.ToLower(c);
-                if (counts.TryGetValue(lowerChar, out int value))
+                var lChar = char.ToLower(c);
+                if (counts.TryGetValue(lChar, out int value))
                 {
-                    counts[lowerChar] = ++value;
+                    counts[lChar] = ++value;
                 }
                 else
                 {
-                    counts[lowerChar] = 1;
+                    counts[lChar] = 1;
                 }
             }
         }
@@ -79,13 +79,6 @@ public static class A_CoreConcepts
         return plainText;
     }
 
-    //create more core concepts methods as needed
-
-    public static void PrintHelloWorld()
-    {
-        Console.WriteLine("Hello, World!");
-    }
-
     public static void PrintCurrentDateTime()
     {
         Console.WriteLine($"Current DateTime: {DateTime.Now}");
@@ -97,21 +90,6 @@ public static class A_CoreConcepts
         Console.WriteLine($"Random Number: {random.Next(1, 100)}");
     }
 
-    public static void PrintSumOfTwoNumbers(int a, int b)
-    {
-        Console.WriteLine($"Sum of {a} and {b} is {a + b}");
-    }
-
-    public static void PrintProductOfTwoNumbers(int a, int b)
-    {
-        Console.WriteLine($"Product of {a} and {b} is {a * b}");
-    }
-
-    public static void PrintGreeting(string name)
-    {
-        Console.WriteLine($"Hello, {name}!");
-    }
-
     public static void PrintEvenNumbers(int limit)
     {
         Console.WriteLine($"Even numbers up to {limit}:");
@@ -120,6 +98,7 @@ public static class A_CoreConcepts
             Console.WriteLine(i);
         }
     }
+
     public static void PrintOddNumbers(int limit)
     {
         Console.WriteLine($"Odd numbers up to {limit}:");
@@ -150,35 +129,6 @@ public static class A_CoreConcepts
         }
     }
 
-
-
-    public static void PrintArrayElements(int[] array)
-    {
-        Console.WriteLine("Array elements:");
-        foreach (var item in array)
-        {
-            Console.WriteLine(item);
-        }
-    }
-
-    public static void PrintListElements(List<string> list)
-    {
-        Console.WriteLine("List elements:");
-        foreach (var item in list)
-        {
-            Console.WriteLine(item);
-        }
-    }
-
-    public static void PrintDictionaryElements(Dictionary<string, int> dictionary)
-    {
-        Console.WriteLine("Dictionary elements:");
-        foreach (var kvp in dictionary)
-        {
-            Console.WriteLine($"{kvp.Key}: {kvp.Value}");
-        }
-    }
-
     public static string ReverseString(string input)
     {
         char[] charArray = input.ToCharArray();
@@ -195,7 +145,12 @@ public static class A_CoreConcepts
 
     public static bool IsPalindromeTwoPointer(string input)
     {
-        if (string.IsNullOrEmpty(input) || input.Length == 1) return true; // Empty string is a palindrome or single character is a palindrome
+        // Empty string is a palindrome or single character is a palindrome
+        if (string.IsNullOrEmpty(input) || input.Length == 1)
+        {
+            return true;
+        } 
+
         input = new string(input.Where(c => char.IsLetterOrDigit(c)).ToArray());
         input = input.ToLower();
         int left = 0, right = input.Length - 1;
@@ -223,25 +178,33 @@ public static class A_CoreConcepts
 
     public static int[] MergeSortedArrays(int[] arr1, int[] arr2)
     {
-        int[] result = new int[arr1.Length + arr2.Length];
-        int i = 0, j = 0, k = 0;
+        int[] mergeArr = new int[arr1.Length + arr2.Length];
+        int i = 0, j = 0, m = 0;
 
         while (i < arr1.Length && j < arr2.Length)
         {
             if (arr1[i] < arr2[j])
             {
-                result[k++] = arr1[i++];
+                mergeArr[m++] = arr1[i++];
             }
             else
             {
-                result[k++] = arr2[j++];
+                mergeArr[m++] = arr2[j++];
             }
         }
 
-        while (i < arr1.Length) result[k++] = arr1[i++];
-        while (j < arr2.Length) result[k++] = arr2[j++];
+        while (i < arr1.Length)
+        {
+            mergeArr[m++] = arr1[i++];
+        }
+        while (j < arr2.Length)
+        {
+            mergeArr[m++] = arr2[j++];
+        }
 
-        return result;
+        return mergeArr;
     }
+
+
 
 }

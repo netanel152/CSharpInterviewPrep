@@ -61,15 +61,28 @@ public static class B_ProblemSolving
 
     public static bool HasPairWithSum(int[] numbers, int target)
     {
-        if (numbers == null || numbers.Length < 2) return false;        
+        if (numbers == null || numbers.Length < 2)
+        {
+            return false;
+        }
+
         Array.Sort(numbers);
         int left = 0, right = numbers.Length - 1;
         while (left < right)
         {
             int sum = numbers[left] + numbers[right];
-            if (sum == target) return true;
-            if (sum < target) left++;
-            else right--;
+
+            if (sum == target) 
+                return true;
+
+            if (sum < target)
+            {
+                left++;
+            }
+            else
+            {
+                right--;
+            }
         }
         return false;
     }

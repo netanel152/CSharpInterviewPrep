@@ -50,7 +50,6 @@ static Task RunCoreConcepts()
     Console.WriteLine($"EncodeToBase64: Encoded string is {base64Encoded}.");
     var decodedText = A_CoreConcepts.DecodeFromBase64(base64Encoded);
     Console.WriteLine($"DecodeFromBase64: Decoded string is {decodedText}.");
-    Console.WriteLine("---------------------------------\n");
 
     //dmonstration of the PrintFibonacciSeries
     Console.WriteLine("--- Demonstrating PrintFibonacciSeries ---");
@@ -67,6 +66,14 @@ static Task RunCoreConcepts()
     string palindromeString = "";
     bool isPalindrome = A_CoreConcepts.IsPalindrome(palindromeString);
     Console.WriteLine($"Is '{palindromeString}' a palindrome? {isPalindrome}");
+
+    //demonstration of the MergeSortedArrays
+    Console.WriteLine("--- Demonstrating MergeSortedArrays ---");
+    int[] array1 = { 1, 3, 5 };
+    int[] array2 = { 2, 4, 6, 7 };
+    int[] mergedArray = A_CoreConcepts.MergeSortedArrays(array1, array2);
+    Console.WriteLine($"Merged array: {string.Join(", ", mergedArray)}");
+    Console.WriteLine("---------------------------------\n");
     return Task.CompletedTask;
 }
 
@@ -148,7 +155,6 @@ static async Task RunAdvancedTopics()
     await repository.GetById(123);
     stopwatch.Stop();
     Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
-    Console.WriteLine("---------------------------------\n");
 
     // Asynchronous Processing Demo
     var processor = new AsyncDataProcessor();
