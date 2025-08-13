@@ -18,6 +18,11 @@ static Task RunCoreConcepts()
     var charCounts = A_CoreConcepts.CountCharacters("hello world");
     Console.WriteLine($"CountCharacters('hello world'): {charCounts.Count} distinct chars found.");
 
+    // demonstration of the GetMostFrequentChar
+    string input = "abracadabracdb";
+    char mostFrequentChar = A_CoreConcepts.GetMostFrequentChar(input);
+    Console.WriteLine($"GetMostFrequentChar('{input}'): Most frequent char is '{mostFrequentChar}'.");
+
     var products = new List<Product> { new() { Id = 1, Name = "Laptop" }, new() { Id = 2, Name = "Smartphone" } };
     var productLookup = A_CoreConcepts.CreateProductLookup(products);
     Console.WriteLine($"CreateProductLookup: Found {productLookup.Count} products.");
@@ -52,6 +57,16 @@ static Task RunCoreConcepts()
     A_CoreConcepts.PrintFibonacciSeries(10);
 
     // demonstration of the ReverseString
+    Console.WriteLine("--- Demonstrating ReverseString ---");
+    string original = "Hello World";
+    string reversed = A_CoreConcepts.ReverseString(original);
+    Console.WriteLine($"Original: {original}, Reversed: {reversed}");
+
+    // demonstration of the IsPalindrome
+    Console.WriteLine("--- Demonstrating IsPalindrome ---");
+    string palindromeString = "";
+    bool isPalindrome = A_CoreConcepts.IsPalindrome(palindromeString);
+    Console.WriteLine($"Is '{palindromeString}' a palindrome? {isPalindrome}");
     return Task.CompletedTask;
 }
 
@@ -74,6 +89,19 @@ static Task RunProblemSolving()
 
     string rotatedArray = B_ProblemSolving.RotateArray(new[] { 1, 2, 3, 4, 5 }, 2);
     Console.WriteLine($"RotateArray: Rotated array is {rotatedArray}");
+
+    // demonstration of the has pair with sum
+    Console.WriteLine("--- Demonstrating HasPairWithSum ---");
+    int[] numbers = { 1, 2, 5, 4, 3 };
+    int targetSum = 6;
+    bool hasPair = B_ProblemSolving.HasPairWithSum(numbers, targetSum);
+    Console.WriteLine($"HasPairWithSum: Pair with sum {targetSum} exists: {hasPair}");
+
+    // demonstration of the second largest number
+    Console.WriteLine("--- Demonstrating FindSecondLargestNumber ---");
+    List<int> list = [3, 1, 4, 4, 5, 2];
+    int? secondLargest = B_ProblemSolving.FindSecondLargestNumber(list);
+    Console.WriteLine($"Second largest number in {string.Join(", ", list)} is: {secondLargest}");
     Console.WriteLine("---------------------------------\n");
     return Task.CompletedTask;
 }

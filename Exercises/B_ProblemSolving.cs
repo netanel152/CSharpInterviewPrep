@@ -58,4 +58,43 @@ public static class B_ProblemSolving
         Array.Copy(arr, 0, rotatedArray, k, arr.Length - k);
         return string.Join(", ", rotatedArray);
     }
+
+    public static bool HasPairWithSum(int[] numbers, int target)
+    {
+        if (numbers == null || numbers.Length < 2) return false;        
+        Array.Sort(numbers);
+        int left = 0, right = numbers.Length - 1;
+        while (left < right)
+        {
+            int sum = numbers[left] + numbers[right];
+            if (sum == target) return true;
+            if (sum < target) left++;
+            else right--;
+        }
+        return false;
+    }
+
+    public static int FindSecondLargestNumber(List<int> numbers)
+    {
+        int largest = int.MinValue;
+        int second = int.MinValue;
+
+        foreach (var number in numbers)
+        {
+            if (number > largest)
+            {
+                second = largest;
+                largest = number;
+            }
+            else if (number > second && number < largest)
+            {
+                second = number;
+            }
+        }
+        if (second == int.MinValue)
+        {
+            throw new InvalidOperationException("There is no second largest number in the list.");
+        }
+        return second;
+    }
 }

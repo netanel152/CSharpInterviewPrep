@@ -26,6 +26,16 @@ public static class A_CoreConcepts
         return counts;
     }
 
+
+    public static char GetMostFrequentChar(string input)
+    {
+        return input
+            .GroupBy(c => c)
+            .OrderByDescending(g => g.Count())
+            .First()
+            .Key;
+    }
+
     public static Dictionary<int, string> CreateProductLookup(List<Product> products)
     {
         return products.ToDictionary(p => p.Id, p => p.Name);
@@ -140,13 +150,7 @@ public static class A_CoreConcepts
         }
     }
 
-    public static void ReverseString(string input)
-    {
-        char[] charArray = input.ToCharArray();
-        Array.Reverse(charArray);
-        string reversed = new string(charArray);
-        Console.WriteLine($"Reversed string: {reversed}");
-    }
+
 
     public static void PrintArrayElements(int[] array)
     {
@@ -173,6 +177,71 @@ public static class A_CoreConcepts
         {
             Console.WriteLine($"{kvp.Key}: {kvp.Value}");
         }
+    }
+
+    public static string ReverseString(string input)
+    {
+        char[] charArray = input.ToCharArray();
+        Array.Reverse(charArray);
+        string reversed = new(charArray);
+        return reversed;
+    }
+
+    internal static bool IsPalindrome(string palindrome)
+    {
+        string reversed = ReverseString(palindrome);
+        return string.Equals(palindrome, reversed, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsPalindromeTwoPointer(string input)
+    {
+        if (string.IsNullOrEmpty(input) || input.Length == 1) return true; // Empty string is a palindrome or single character is a palindrome
+        input = new string(input.Where(c => char.IsLetterOrDigit(c)).ToArray());
+        input = input.ToLower();
+        int left = 0, right = input.Length - 1;
+        while (left < right)
+        {
+            if (input[left] != input[right]) return false;
+            left++;
+            right--;
+        }
+        return true;
+    }
+
+    public static void FizzBuzz()
+    {
+        Enumerable.Range(1, 100)
+            .ToList()
+            .ForEach(n =>
+            {
+                if (n % 15 == 0) Console.WriteLine("FizzBuzz");
+                else if (n % 3 == 0) Console.WriteLine("Fizz");
+                else if (n % 5 == 0) Console.WriteLine("Buzz");
+                else Console.WriteLine(n);
+            });
+    }
+
+    public static int[] MergeSortedArrays(int[] arr1, int[] arr2)
+    {
+        int[] result = new int[arr1.Length + arr2.Length];
+        int i = 0, j = 0, k = 0;
+
+        while (i < arr1.Length && j < arr2.Length)
+        {
+            if (arr1[i] < arr2[j])
+            {
+                result[k++] = arr1[i++];
+            }
+            else
+            {
+                result[k++] = arr2[j++];
+            }
+        }
+
+        while (i < arr1.Length) result[k++] = arr1[i++];
+        while (j < arr2.Length) result[k++] = arr2[j++];
+
+        return result;
     }
 
 }
