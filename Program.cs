@@ -1,6 +1,10 @@
 ﻿using CSharpInterviewPrep.Exercises;
 using Microsoft.Extensions.Caching.Memory;
 using System.Diagnostics;
+using static CSharpInterviewPrep.Exercises.A_CoreConcepts;
+using static CSharpInterviewPrep.Exercises.B_ProblemSolving;
+using static CSharpInterviewPrep.Exercises.C_AdvancedTopics;
+using static CSharpInterviewPrep.Exercises.E_SystemDesignProblems;
 using static CSharpInterviewPrep.Models.ExerciseModels;
 
 Console.WriteLine("--- C# Interview Prep Exercises ---\n");
@@ -8,6 +12,8 @@ Console.WriteLine("--- C# Interview Prep Exercises ---\n");
 await RunCoreConcepts();
 await RunProblemSolving();
 await RunAdvancedTopics();
+await RunObjectOrientedProgramming();
+await RunSystemDesignProblems();
 
 Console.WriteLine("\n--- All exercises completed successfully! ---");
 
@@ -15,20 +21,21 @@ Console.WriteLine("\n--- All exercises completed successfully! ---");
 static Task RunCoreConcepts()
 {
     Console.WriteLine("--- Section 1: Core C# Concepts ---");
-    var charCounts = A_CoreConcepts.CountCharacters("hello world");
+
+    Console.WriteLine("--- Demonstrating CountCharacters ---");
+    var charCounts = CountCharacters("hello world");
     Console.WriteLine($"CountCharacters('hello world'): {charCounts.Count} distinct chars found.");
 
-    // demonstration of the GetMostFrequentChar
     string input = "abracadabracdb";
-    char mostFrequentChar = A_CoreConcepts.GetMostFrequentChar(input);
+    char mostFrequentChar = GetMostFrequentChar(input);
     Console.WriteLine($"GetMostFrequentChar('{input}'): Most frequent char is '{mostFrequentChar}'.");
 
     var products = new List<Product> { new() { Id = 1, Name = "Laptop" }, new() { Id = 2, Name = "Smartphone" } };
-    var productLookup = A_CoreConcepts.CreateProductLookup(products);
+    var productLookup = CreateProductLookup(products);
     Console.WriteLine($"CreateProductLookup: Found {productLookup.Count} products.");
 
     var numbers = new List<int> { 1, 2, 3, 4, 5, 6 };
-    var doubledEvens = A_CoreConcepts.FilterAndDoubleEvens(numbers);
+    var doubledEvens = FilterAndDoubleEvens(numbers);
     Console.WriteLine($"FilterAndDoubleEvens: Found {doubledEvens.Count} even numbers, doubled them to {string.Join(", ", doubledEvens)}.");
     var orders = new List<Order>
     {
@@ -36,42 +43,39 @@ static Task RunCoreConcepts()
         new() { Category = "Books", Price = 50 },
         new() { Category = "Electronics", Price = 200 }
     };
-    var salesByCategory = A_CoreConcepts.GetSalesByCategory(orders);
+    var salesByCategory = GetSalesByCategory(orders);
     Console.WriteLine($"GetSalesByCategory: Found {salesByCategory.Count} categories with total sales.");
     foreach (var category in salesByCategory)
     {
         Console.WriteLine($"Category: {category.Key}, Total Sales: {category.Value:C}");
     }
     var students = new List<Student> { new() { Name = "Alice", Grade = 95 }, new() { Name = "Bob", Grade = 80 }, new() { Name = "Charlie", Grade = 92 } };
-    var topStudents = A_CoreConcepts.GetTopStudents(students);
+    var topStudents = GetTopStudents(students);
     Console.WriteLine($"GetTopStudents: Top student is {topStudents.First().Name}.");
 
-    var base64Encoded = A_CoreConcepts.EncodeToBase64("Hello World");
+    var base64Encoded = EncodeToBase64("Hello World");
     Console.WriteLine($"EncodeToBase64: Encoded string is {base64Encoded}.");
-    var decodedText = A_CoreConcepts.DecodeFromBase64(base64Encoded);
+    var decodedText = DecodeFromBase64(base64Encoded);
     Console.WriteLine($"DecodeFromBase64: Decoded string is {decodedText}.");
 
-    //dmonstration of the PrintFibonacciSeries
     Console.WriteLine("--- Demonstrating PrintFibonacciSeries ---");
-    A_CoreConcepts.PrintFibonacciSeries(10);
+    
+    PrintFibonacciSeries(10);
 
-    // demonstration of the ReverseString
     Console.WriteLine("--- Demonstrating ReverseString ---");
     string original = "Hello World";
-    string reversed = A_CoreConcepts.ReverseString(original);
+    string reversed = ReverseString(original);
     Console.WriteLine($"Original: {original}, Reversed: {reversed}");
 
-    // demonstration of the IsPalindrome
     Console.WriteLine("--- Demonstrating IsPalindrome ---");
     string palindromeString = "";
-    bool isPalindrome = A_CoreConcepts.IsPalindrome(palindromeString);
+    bool isPalindrome = IsPalindrome(palindromeString);
     Console.WriteLine($"Is '{palindromeString}' a palindrome? {isPalindrome}");
 
-    //demonstration of the MergeSortedArrays
     Console.WriteLine("--- Demonstrating MergeSortedArrays ---");
     int[] array1 = { 1, 3, 5 };
     int[] array2 = { 2, 4, 6, 7 };
-    int[] mergedArray = A_CoreConcepts.MergeSortedArrays(array1, array2);
+    int[] mergedArray = MergeSortedArrays(array1, array2);
     Console.WriteLine($"Merged array: {string.Join(", ", mergedArray)}");
     Console.WriteLine("---------------------------------\n");
     return Task.CompletedTask;
@@ -80,34 +84,32 @@ static Task RunCoreConcepts()
 static Task RunProblemSolving()
 {
     Console.WriteLine("--- Section 2: Problem Solving ---");
-    bool isAnagram = B_ProblemSolving.AreAnagrams("listen", "silent");
+    bool isAnagram = AreAnagrams("listen", "silent");
     Console.WriteLine($"AreAnagrams('listen', 'silent'): {isAnagram}");
 
-    int? duplicate = B_ProblemSolving.FindFirstDuplicate(new[] { 2, 5, 1, 2, 3 });
+    int? duplicate = FindFirstDuplicate(new[] { 2, 5, 1, 2, 3 });
     Console.WriteLine($"FindFirstDuplicate: Found {duplicate}");
 
     string text = "This is a test. This test is only a test.";
-    var topWords = B_ProblemSolving.GetTop10CommonWords(text);
+    var topWords = GetTop10CommonWords(text);
     Console.WriteLine("GetTop10CommonWords: Top words are:");
     foreach (var word in topWords)
     {
         Console.WriteLine($"- {word}");
     }
 
-    string rotatedArray = B_ProblemSolving.RotateArray(new[] { 1, 2, 3, 4, 5 }, 2);
+    string rotatedArray = RotateArray(new[] { 1, 2, 3, 4, 5 }, 2);
     Console.WriteLine($"RotateArray: Rotated array is {rotatedArray}");
 
-    // demonstration of the has pair with sum
     Console.WriteLine("--- Demonstrating HasPairWithSum ---");
     int[] numbers = { 1, 2, 5, 4, 3 };
     int targetSum = 6;
-    bool hasPair = B_ProblemSolving.HasPairWithSum(numbers, targetSum);
+    bool hasPair = HasPairWithSum(numbers, targetSum);
     Console.WriteLine($"HasPairWithSum: Pair with sum {targetSum} exists: {hasPair}");
 
-    // demonstration of the second largest number
     Console.WriteLine("--- Demonstrating FindSecondLargestNumber ---");
     List<int> list = [3, 1, 4, 4, 5, 2];
-    int? secondLargest = B_ProblemSolving.FindSecondLargestNumber(list);
+    int? secondLargest = FindSecondLargestNumber(list);
     Console.WriteLine($"Second largest number in {string.Join(", ", list)} is: {secondLargest}");
     Console.WriteLine("---------------------------------\n");
     return Task.CompletedTask;
@@ -117,7 +119,6 @@ static async Task RunAdvancedTopics()
 {
     Console.WriteLine("--- Section 3: Advanced Topics ---");
 
-    // Flexible Notification System Demo
     Console.WriteLine("--- Demonstrating Flexible Notification System ---");
     var emailSender = new EmailSender();
     var smsSender = new SmsSender();
@@ -125,12 +126,8 @@ static async Task RunAdvancedTopics()
     var notificationService = new NotificationService(new List<INotificationSender> { emailSender, smsSender, whatsappSender });
     await notificationService.SendAllNotificationsAsync("user123", "Your order has been shipped!");
 
+    DemonstrateRaceCondition();
 
-    // Race Condition Demo
-    C_AdvancedTopics.DemonstrateRaceCondition();
-    Console.WriteLine("---------------------------------\n");
-
-    // Caching Decorator Pattern Demo
     Console.WriteLine("--- Demonstrating Caching Decorator Pattern ---");
     var cache = new MemoryCache(new MemoryCacheOptions());
     IRepository repository = new CachingRepository(new SlowRepository(), cache);
@@ -156,12 +153,10 @@ static async Task RunAdvancedTopics()
     stopwatch.Stop();
     Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
 
-    // Asynchronous Processing Demo
     var processor = new AsyncDataProcessor();
     var profile = await processor.ProcessUserDataAsync(123);
     Console.WriteLine($"Fetched profile for: {profile.Name}");
 
-    // Demonstrating GetOrderedProducts
     Console.WriteLine("--- Demonstrating GetOrderedProducts ---");
     var products = new List<Product>
     {
@@ -176,21 +171,27 @@ static async Task RunAdvancedTopics()
         new Order { ProductId = 3, Category = "Electronics", Price = 300 }
     };
 
-    var orderedProducts = C_AdvancedTopics.GetOrderedProducts(products, orders);
+    var orderedProducts = GetOrderedProducts(products, orders);
     Console.WriteLine("Ordered products:");
     foreach (var product in orderedProducts)
     {
         Console.WriteLine($"- {product.Name}");
     }
 
-    // demonstation of object oriented programming concepts
+    Console.WriteLine("---------------------------------\n");
+}
+
+static async Task RunObjectOrientedProgramming()
+{
+    Console.WriteLine("--- Section 4: Object-Oriented Programming ---");
+
     Console.WriteLine("--- Demonstrating Object-Oriented Programming Concepts ---");
 
     var shippingStrategy = ShippingStrategyFactory.GetStrategy("weight");
     var order = new Order { TotalWeight = 10.0m, Category = "Books" };
     var shippingCost = shippingStrategy.CalculateShippingCost(order);
     Console.WriteLine($"Shipping cost using WeightShippingStrategy: {shippingCost:C}");
-    //var configManager = ConfigurationManager.Instance;
+    var configManager = ConfigurationManager.Instance;
     //Console.WriteLine($"ConfigurationManager instance created with settings: {string.Join(", ", configManager.Settings.Select(kv => $"{kv.Key}={kv.Value}"))}"); 
     //Console.WriteLine($"ConfigurationManager instance created with settings: {configManager.Settings.Count} settings loaded.");
     //Console.WriteLine($"DatabaseConnectionString: {configManager.Settings["DatabaseConnectionString"]}");
@@ -214,6 +215,107 @@ static async Task RunAdvancedTopics()
 
     // שינוי המחיר יפעיל אוטומטית את המתודה של הלקוח
     productEvent.Price = 90;
+
+    Console.WriteLine("\n--- Struct vs. Class Demo (Money Struct) ---");
+    var price1 = new Money(100, "USD");
+    var tax = new Money(15, "USD");
+
+    var totalPrice = price1.Add(tax); // הפעולה יצרה אובייקט חדש
+
+    Console.WriteLine($"Price 1: {price1}"); // price1 לא השתנה, הוא עדיין 100 USD
+    Console.WriteLine($"Total Price: {totalPrice}");
+
+    Console.WriteLine("\n--- Delegate & Event Demo (Auction) ---");
+
+    var artPiece = new AuctionItem("Mona Lisa");
+    var bidder1 = new Bidder("Alice");
+    var bidder2 = new Bidder("Bob");
+
+    // שני המציעים "נרשמים" לקבל התראות
+    artPiece.NewBidPlaced += bidder1.OnNewBidPlacedHandler;
+    artPiece.NewBidPlaced += bidder2.OnNewBidPlacedHandler;
+
+    artPiece.PlaceBid("Charlie", 100); // אליס ובוב יקבלו התראה
+    artPiece.PlaceBid("Alice", 150);   // רק בוב יקבל התראה
+    artPiece.PlaceBid("Dave", 120);    // אף אחד לא יקבל התראה, ההצעה נמוכה מדי
+
+    Console.WriteLine("---------------------------------\n");
+}
+
+static async Task RunSystemDesignProblems()
+{
+    Console.WriteLine("--- Section 5: System Design Problems ---");
+    //demonstration of the Lederboard system
+    Console.WriteLine("--- Demonstrating Leaderboard System ---");
+    var leaderboard = new E_SystemDesignProblems.Leaderboard();
+    leaderboard.UpdateScore(1, 100);
+    leaderboard.UpdateScore(2, 200);
+
+    var topPlayers = leaderboard.GetTopPlayers(1);
+    Console.WriteLine($"Top player ID: {topPlayers.FirstOrDefault()}");
+    //demonstration of the BadHttpService and GoodHttpService
+    //Console.WriteLine("--- Demonstrating Bad and Good HTTP Services ---");
+    //var badService = new BadHttpService();
+    //try
+    //{
+    //    string badData = await badService.FetchDataAsync("http://example.com");
+    //    Console.WriteLine($"Bad HTTP Service fetched data: {badData.Substring(0, 50)}...");
+    //}
+    //catch (Exception ex)
+    //{
+    //    Console.WriteLine($"Bad HTTP Service error: {ex.Message}");
+    //}
+    //var goodService = new GoodHttpService();
+    //try
+    //{
+    //    string goodData = await goodService.FetchDataAsync("http://example.com");
+    //    Console.WriteLine($"Good HTTP Service fetched data: {goodData.Substring(0, 50)}...");
+    //}
+    //catch (Exception ex)
+    //{
+    //    Console.WriteLine($"Good HTTP Service error: {ex.Message}");
+    //}
+
+    //demonstration of the LargeFileSorter
+    Console.WriteLine("--- Demonstrating Large File Sorter ---");
+    //var largeFileSorter = new LargeFileSorter();
+    //var unsortedFilePath = "unsorted_numbers.txt"; // Assume this file exists with unsorted numbers
+    //var sortedFilePath = "sorted_numbers.txt";
+    //largeFileSorter.Sort(unsortedFilePath, sortedFilePath);
+    //Console.WriteLine($"Large file sorted and saved to {sortedFilePath}");
+
+
+    //demonstration of the ChangeDetector
+    Console.WriteLine("--- Demonstrating Change Detector ---");
+
+    var fruitV1 = new Fruit
+    {
+        Name = "Apple",
+        Color = "Red",
+        Price = 1.2m
+    };
+
+    var fruitV2 = new Fruit
+    {
+        Name = "Apple",
+        Color = "Green",
+        Price = 1.3m
+    };
+
+    var changes = ChangeDetector.FindChanges(fruitV1, fruitV2);
+
+    Console.WriteLine("Changes detected between fruitV1 and fruitV2:");
+    if (changes.Any())
+    {
+        foreach (var change in changes)
+        {
+            Console.WriteLine($"- Property '{change.PropertyName}' changed from '{change.OldValue}' to '{change.NewValue}'");
+        }
+    }
+    else
+    {
+        Console.WriteLine("No changes found.");
+    }
 
     Console.WriteLine("---------------------------------\n");
 }

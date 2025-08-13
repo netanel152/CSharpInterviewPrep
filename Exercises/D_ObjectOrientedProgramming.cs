@@ -153,3 +153,88 @@ public class Customer
         Console.WriteLine($"Price changed! Old: {e.OldPrice:C}, New: {e.NewPrice:C}. I should consider buying!");
     }
 }
+
+
+public readonly struct Money
+{
+    public decimal Amount { get; }
+    public string Currency { get; }
+
+    public Money(decimal amount, string currency)
+    {
+        Amount = amount;
+        Currency = currency;
+    }
+
+    // פעולה שמחזירה אובייקט Money חדש
+    public Money Add(Money other)
+    {
+        if (Currency != other.Currency)
+        {
+            throw new InvalidOperationException("Cannot add money of different currencies.");
+        }
+        return new Money(Amount + other.Amount, Currency);
+    }
+
+    public override string ToString() => $"{Amount:F2} {Currency}";
+}
+public class NewBidEventArgs : EventArgs
+{
+    public decimal BidAmount { get; set; }
+    public required string BidderName { get; set; }
+}
+
+public class AuctionItem
+{
+    // הגדרת האירוע. הוא משתמש ב-delegate הגנרי EventHandler
+    public event EventHandler<NewBidEventArgs>? NewBidPlaced;
+
+    public string Name { get; }
+    public decimal CurrentHighestBid { get; private set; } = 0;
+
+    public AuctionItem(string name)
+    {
+        Name = name;
+    }
+
+    public void PlaceBid(string bidderName, decimal amount)
+    {
+        if (amount > CurrentHighestBid)
+        {
+            Console.WriteLine($"\n{bidderName} placed a new high bid of {amount:C} for {Name}!");
+            CurrentHighestBid = amount;
+            // "ירי" של האירוע לכל המאזינים
+            OnNewBidPlaced(new NewBidEventArgs { BidAmount = amount, BidderName = bidderName });
+        }
+        else
+        {
+            Console.WriteLine($"{bidderName}'s bid of {amount:C} is not higher than the current bid.");
+        }
+    }
+
+    protected virtual void OnNewBidPlaced(NewBidEventArgs e)
+    {
+        NewBidPlaced?.Invoke(this, e);
+    }
+}
+
+// 3. ה"צופה" (Observer) - המציע במכירה
+public class Bidder
+{
+    public string Name { get; }
+
+    public Bidder(string name)
+    {
+        Name = name;
+    }
+
+    // זוהי המתודה שתופעל כשהאירוע יקרה
+    public void OnNewBidPlacedHandler(object? sender, NewBidEventArgs e)
+    {
+        // אם אני לא זה שהצעתי את ההצעה, אני מקבל התראה
+        if (e.BidderName != Name)
+        {
+            Console.WriteLine($"  -> {Name} notified: New highest bid of {e.BidAmount:C} was placed by {e.BidderName}.");
+        }
+    }
+}

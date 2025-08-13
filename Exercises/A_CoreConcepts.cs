@@ -3,7 +3,7 @@ using static CSharpInterviewPrep.Models.ExerciseModels;
 
 namespace CSharpInterviewPrep.Exercises;
 
-public static class A_CoreConcepts
+public class A_CoreConcepts
 {
     public static Dictionary<char, int> CountCharacters(string text)
     {
