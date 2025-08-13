@@ -317,5 +317,37 @@ static async Task RunSystemDesignProblems()
         Console.WriteLine("No changes found.");
     }
 
+
+    Console.WriteLine("\n--- System Design: Thread-Safe Like Counter Demo ---");
+    var likeService = new LikeCounterService();
+    const int songId = 123;
+    const int likesPerThread = 100_000;
+    const int numberOfThreads = 10;
+    const int expectedLikes = likesPerThread * numberOfThreads;
+
+    var threads = new List<Thread>();
+
+    for (int i = 0; i < numberOfThreads; i++)
+    {
+        var thread = new Thread(() =>
+        {
+            for (int j = 0; j < likesPerThread; j++)
+            {
+                likeService.Like(songId);
+            }
+        });
+        threads.Add(thread);
+        thread.Start();
+    }
+
+    foreach (var thread in threads)
+    {
+        thread.Join(); // המתן לסיום כל ה-Threads
+    }
+
+    int finalCount = likeService.GetLikeCount(songId);
+    Console.WriteLine($"Final like count for song {songId}: {finalCount:N0}");
+    Console.WriteLine($"Expected like count: {expectedLikes:N0}");
+    Console.WriteLine($"Success: {finalCount == expectedLikes}");
     Console.WriteLine("---------------------------------\n");
 }

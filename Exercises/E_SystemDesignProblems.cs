@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Concurrent;
+using System.Reflection;
 using static CSharpInterviewPrep.Models.ExerciseModels;
 
 namespace CSharpInterviewPrep.Exercises;
@@ -155,6 +156,45 @@ public class E_SystemDesignProblems
                 }
             }
             return changes;
+        }
+    }
+
+
+    public class ThreadSafeCounter
+    {
+        private int _value;
+        public int Value => _value;
+        public int Increment() => Interlocked.Increment(ref _value);
+    }
+
+    // 2. השירות המרכזי שמנהל את כל המונים
+    public class LikeCounterService
+    {
+        private readonly ConcurrentDictionary<int, ThreadSafeCounter> _likeCounters = new();
+
+        /// <summary>
+        /// מקבל 'לייק' לשיר ומגדיל את המונה שלו בצורה בטוחה.
+        /// </summary>
+        public void Like(int songId)
+        {
+            // GetOrAdd היא פעולה אטומית: היא או מחזירה את המונה הקיים,
+            // או יוצרת חדש ומוסיפה אותו למילון, ומבטיחה שזה קורה רק פעם אחת.
+            ThreadSafeCounter counter = _likeCounters.GetOrAdd(songId, _ => new ThreadSafeCounter());
+
+            counter.Increment();
+        }
+
+        /// <summary>
+        /// מחזיר את מספר הלייקים הנוכחי עבור שיר מסוים.
+        /// </summary>
+        public int GetLikeCount(int songId)
+        {
+            // TryGetValue היא הדרך היעילה לקרוא מ-ConcurrentDictionary.
+            if (_likeCounters.TryGetValue(songId, out var counter))
+            {
+                return counter.Value;
+            }
+            return 0;
         }
     }
 }

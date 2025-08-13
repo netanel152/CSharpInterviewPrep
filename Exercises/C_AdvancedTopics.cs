@@ -70,7 +70,11 @@ public static class C_AdvancedTopics
             stopwatch.Stop();
             Console.WriteLine($"Total async processing time: {stopwatch.ElapsedMilliseconds} ms (should be ~1500ms)");
 
-            return new UserProfile { Name = await nameTask, Permissions = await permissionsTask };
+            return new UserProfile
+            {
+                Name = await nameTask,
+                Permissions = await permissionsTask
+            };
         }
     }
 
