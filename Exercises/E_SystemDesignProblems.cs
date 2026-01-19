@@ -197,4 +197,114 @@ public class E_SystemDesignProblems
             return 0;
         }
     }
+
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 5: System Design Problems ---");
+        //demonstration of the Lederboard system
+        Console.WriteLine("--- Demonstrating Leaderboard System ---");
+        var leaderboard = new E_SystemDesignProblems.Leaderboard();
+        leaderboard.UpdateScore(1, 100);
+        leaderboard.UpdateScore(2, 200);
+
+        var topPlayers = leaderboard.GetTopPlayers(1);
+        Console.WriteLine($"Top player ID: {topPlayers.FirstOrDefault()}");
+        //demonstration of the BadHttpService and GoodHttpService
+        //Console.WriteLine("--- Demonstrating Bad and Good HTTP Services ---");
+        //var badService = new BadHttpService();
+        //try
+        //{
+        //    string badData = await badService.FetchDataAsync("http://example.com");
+        //    Console.WriteLine($"Bad HTTP Service fetched data: {badData.Substring(0, 50)}...");
+        //}
+        //catch (Exception ex)
+        //{
+        //    Console.WriteLine($"Bad HTTP Service error: {ex.Message}");
+        //}
+        //var goodService = new GoodHttpService();
+        //try
+        //{
+        //    string goodData = await goodService.FetchDataAsync("http://example.com");
+        //    Console.WriteLine($"Good HTTP Service fetched data: {goodData.Substring(0, 50)}...");
+        //}
+        //catch (Exception ex)
+        //{
+        //    Console.WriteLine($"Good HTTP Service error: {ex.Message}");
+        //}
+
+        //demonstration of the LargeFileSorter
+        Console.WriteLine("--- Demonstrating Large File Sorter ---");
+        //var largeFileSorter = new LargeFileSorter();
+        //var unsortedFilePath = "unsorted_numbers.txt"; // Assume this file exists with unsorted numbers
+        //var sortedFilePath = "sorted_numbers.txt";
+        //largeFileSorter.Sort(unsortedFilePath, sortedFilePath);
+        //Console.WriteLine($"Large file sorted and saved to {sortedFilePath}");
+
+
+        //demonstration of the ChangeDetector
+        Console.WriteLine("--- Demonstrating Change Detector ---");
+
+        //var fruitV1 = new Fruit
+        //{
+        //    Name = "Apple",
+        //    Color = "Red",
+        //    Price = 1.2m
+        //};
+
+        //var fruitV2 = new Fruit
+        //{
+        //    Name = "Apple",
+        //    Color = "Green",
+        //    Price = 1.3m
+        //};
+
+        //var changes = ChangeDetector.FindChanges(fruitV1, fruitV2);
+
+        //Console.WriteLine("Changes detected between fruitV1 and fruitV2:");
+        //if (changes.Any())
+        //{
+        //    foreach (var change in changes)
+        //    {
+        //        Console.WriteLine($"- Property '{change.PropertyName}' changed from '{change.OldValue}' to '{change.NewValue}'");
+        //    }
+        //}
+        //else
+        //{
+        //    Console.WriteLine("No changes found.");
+        //}
+
+
+        Console.WriteLine("\n--- System Design: Thread-Safe Like Counter Demo ---");
+        var likeService = new LikeCounterService();
+        const int songId = 123;
+        const int likesPerThread = 100_000;
+        const int numberOfThreads = 10;
+        const int expectedLikes = likesPerThread * numberOfThreads;
+
+        var threads = new List<Thread>();
+
+        for (int i = 0; i < numberOfThreads; i++)
+        {
+            var thread = new Thread(() =>
+            {
+                for (int j = 0; j < likesPerThread; j++)
+                {
+                    likeService.Like(songId);
+                }
+            });
+            threads.Add(thread);
+            thread.Start();
+        }
+
+        foreach (var thread in threads)
+        {
+            thread.Join(); // המתן לסיום כל ה-Threads
+        }
+
+        int finalCount = likeService.GetLikeCount(songId);
+        Console.WriteLine($"Final like count for song {songId}: {finalCount:N0}");
+        Console.WriteLine($"Expected like count: {expectedLikes:N0}");
+        Console.WriteLine($"Success: {finalCount == expectedLikes}");
+        Console.WriteLine("---------------------------------\n");
+    }
 }

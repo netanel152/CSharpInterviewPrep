@@ -238,3 +238,67 @@ public class Bidder
         }
     }
 }
+
+public static class D_ObjectOrientedProgramming
+{
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 4: Object-Oriented Programming ---");
+
+        Console.WriteLine("--- Demonstrating Object-Oriented Programming Concepts ---");
+
+        var shippingStrategy = ShippingStrategyFactory.GetStrategy("weight");
+        var order = new Order { TotalWeight = 10.0m, Category = "Books" };
+        var shippingCost = shippingStrategy.CalculateShippingCost(order);
+        Console.WriteLine($"Shipping cost using WeightShippingStrategy: {shippingCost:C}");
+        var configManager = ConfigurationManager.Instance;
+        //Console.WriteLine($"ConfigurationManager instance created with settings: {string.Join(", ", configManager.Settings.Select(kv => $"{kv.Key}={kv.Value}"))}"); 
+        //Console.WriteLine($"ConfigurationManager instance created with settings: {configManager.Settings.Count} settings loaded.");
+        //Console.WriteLine($"DatabaseConnectionString: {configManager.Settings["DatabaseConnectionString"]}");
+        //Console.WriteLine($"ApiEndpoint: {configManager.Settings["ApiEndpoint"]}");
+        //Console.WriteLine($"CacheTimeout: {configManager.Settings["CacheTimeout"]} seconds");
+
+        // demonstration of the LegacyLogger
+        Console.WriteLine("--- Demonstrating Legacy Logger ---");
+        var legacyLogger = new LegacyLogger();
+        legacyLogger.WriteEntry("This is a log message from the legacy logger.");
+
+
+        Console.WriteLine("Legacy logger has been successfully used to log a message.");
+
+        // demonstration of the ProductEvent
+        var productEvent = new ProductEvent { Price = 100 };
+        var customer1 = new Customer();
+
+        // הלקוח "נרשם" לקבל התראות על שינויים במחיר
+        productEvent.PriceChanged += customer1.OnPriceChanged;
+
+        // שינוי המחיר יפעיל אוטומטית את המתודה של הלקוח
+        productEvent.Price = 90;
+
+        Console.WriteLine("\n--- Struct vs. Class Demo (Money Struct) ---");
+        var price1 = new Money(100, "USD");
+        var tax = new Money(15, "USD");
+
+        var totalPrice = price1.Add(tax); // הפעולה יצרה אובייקט חדש
+
+        Console.WriteLine($"Price 1: {price1}"); // price1 לא השתנה, הוא עדיין 100 USD
+        Console.WriteLine($"Total Price: {totalPrice}");
+
+        Console.WriteLine("\n--- Delegate & Event Demo (Auction) ---");
+
+        var artPiece = new AuctionItem("Mona Lisa");
+        var bidder1 = new Bidder("Alice");
+        var bidder2 = new Bidder("Bob");
+
+        // שני המציעים "נרשמים" לקבל התראות
+        artPiece.NewBidPlaced += bidder1.OnNewBidPlacedHandler;
+        artPiece.NewBidPlaced += bidder2.OnNewBidPlacedHandler;
+
+        artPiece.PlaceBid("Charlie", 100); // אליס ובוב יקבלו התראה
+        artPiece.PlaceBid("Alice", 150);   // רק בוב יקבל התראה
+        artPiece.PlaceBid("Dave", 120);    // אף אחד לא יקבל התראה, ההצעה נמוכה מדי
+
+        Console.WriteLine("---------------------------------\n");
+    }
+}

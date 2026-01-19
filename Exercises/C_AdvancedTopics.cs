@@ -216,4 +216,70 @@ public static class C_AdvancedTopics
             thread.Join();
         }
     }
+
+    public static async Task Run()
+    {
+        Console.WriteLine("--- Section 3: Advanced Topics ---");
+
+        Console.WriteLine("--- Demonstrating Flexible Notification System ---");
+        var emailSender = new EmailSender();
+        var smsSender = new SmsSender();
+        var whatsappSender = new WhatsAppSender();
+        var notificationService = new NotificationService(new List<INotificationSender> { emailSender, smsSender, whatsappSender });
+        await notificationService.SendAllNotificationsAsync("user123", "Your order has been shipped!");
+
+        DemonstrateRaceCondition();
+
+        Console.WriteLine("--- Demonstrating Caching Decorator Pattern ---");
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        IRepository repository = new CachingRepository(new SlowRepository(), cache);
+
+        Console.WriteLine("First call (should be slow):");
+        var stopwatch = Stopwatch.StartNew();
+        stopwatch.Start();
+        await repository.GetById(123);
+        stopwatch.Stop();
+        Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine("\nSecond call (should be fast and from cache):");
+        stopwatch.Restart();
+        await repository.GetById(123);
+        stopwatch.Stop();
+        Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
+
+        Console.WriteLine("\nWaiting 10 seconds for cache to expire...");
+        await Task.Delay(10000);
+
+        Console.WriteLine("\nThird call after expiration (should be slow again):");
+        stopwatch.Restart();
+        await repository.GetById(123);
+        stopwatch.Stop();
+        Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
+
+        var processor = new AsyncDataProcessor();
+        var profile = await processor.ProcessUserDataAsync(123);
+        Console.WriteLine($"Fetched profile for: {profile.Name}");
+
+        Console.WriteLine("--- Demonstrating GetOrderedProducts ---");
+        var products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Laptop" },
+            new Product { Id = 2, Name = "Smartphone"},
+            new Product { Id = 3, Name = "Tablet" }
+        };
+        var orders = new List<Order>
+        {
+            new Order { ProductId = 1, Category = "Electronics", Price = 1000 },
+            new Order { ProductId = 1, Category = "Electronics", Price = 500 },
+            new Order { ProductId = 3, Category = "Electronics", Price = 300 }
+        };
+
+        var orderedProducts = GetOrderedProducts(products, orders);
+        Console.WriteLine("Ordered products:");
+        foreach (var product in orderedProducts)
+        {
+            Console.WriteLine($"- {product.Name}");
+        }
+
+        Console.WriteLine("---------------------------------\n");
+    }
 }
