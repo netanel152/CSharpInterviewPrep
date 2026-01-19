@@ -41,4 +41,7 @@ L_MemoryManagement.Run();
 // 13. Async Streams & Throttling (Big Data Pattern)
 await M_AsyncStreams.Run();
 
+// 14. Modern LINQ (.NET 6-9)
+N_ModernLinq.Run();
+
 Console.WriteLine("\n--- All exercises completed successfully! ---");

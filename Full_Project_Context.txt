@@ -1,0 +1,3176 @@
+========================================
+FILE: CSharpInterviewPrep.Tests\ArrayAlgorithmsTests.cs
+========================================
+using CSharpInterviewPrep.Services;
+
+namespace CSharpInterviewPrep.Tests;
+
+public class ArrayAlgorithmsTests
+{
+    [Fact]
+    public void FindFirstDuplicate_ShouldReturnDuplicate()
+    {
+        int[] input = { 2, 5, 1, 2, 3 };
+        var result = ArrayAlgorithms.FindFirstDuplicate(input);
+        Assert.Equal(2, result);
+    }
+
+    [Fact]
+    public void FindFirstDuplicate_ShouldReturnNull_WhenNoDuplicates()
+    {
+        int[] input = { 1, 2, 3, 4, 5 };
+        var result = ArrayAlgorithms.FindFirstDuplicate(input);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void MergeSortedArrays_ShouldMergeCorrectly()
+    {
+        int[] arr1 = { 1, 3, 5 };
+        int[] arr2 = { 2, 4, 6 };
+        var result = ArrayAlgorithms.MergeSortedArrays(arr1, arr2);
+        
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, result);
+    }
+
+    [Fact]
+    public void RotateArray_ShouldRotateCorrectly()
+    {
+        int[] arr = { 1, 2, 3, 4, 5 };
+        int k = 2;
+        var result = ArrayAlgorithms.RotateArray(arr, k);
+        Assert.Equal(new[] { 4, 5, 1, 2, 3 }, result);
+    }
+
+    [Fact]
+    public void HasPairWithSum_ShouldReturnTrue_WhenPairExists()
+    {
+        int[] arr = { 1, 2, 3, 9 }; // Sum 8 not possible, sum 5 (2+3) possible
+        Assert.True(ArrayAlgorithms.HasPairWithSum(arr, 5));
+        Assert.False(ArrayAlgorithms.HasPairWithSum(arr, 8));
+    }
+}
+
+
+========================================
+FILE: CSharpInterviewPrep.Tests\CSharpInterviewPrep.Tests.csproj
+========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CSharpInterviewPrep.csproj" />
+  </ItemGroup>
+
+</Project>
+
+
+
+========================================
+FILE: CSharpInterviewPrep.Tests\DataProcessingTests.cs
+========================================
+using CSharpInterviewPrep.Services;
+using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep.Tests;
+
+public class DataProcessingTests
+{
+    [Fact]
+    public void GetTopStudents_ShouldReturnTop3()
+    {
+        var students = new List<Student>
+        {
+            new() { Name = "A", Grade = 50 },
+            new() { Name = "B", Grade = 90 },
+            new() { Name = "C", Grade = 80 },
+            new() { Name = "D", Grade = 95 },
+            new() { Name = "E", Grade = 60 }
+        };
+
+        var result = DataProcessingService.GetTopStudents(students);
+        
+        Assert.Equal(3, result.Count);
+        Assert.Equal("D", result[0].Name); // 95
+        Assert.Equal("B", result[1].Name); // 90
+        Assert.Equal("C", result[2].Name); // 80
+    }
+
+    [Fact]
+    public void FilterAndDoubleEvens_ShouldWorkCorrectly()
+    {
+        var input = new List<int> { 1, 2, 3, 4, 5 };
+        var result = DataProcessingService.FilterAndDoubleEvens(input);
+        
+        Assert.Equal(new List<int> { 4, 8 }, result);
+    }
+}
+
+
+========================================
+FILE: CSharpInterviewPrep.Tests\OrdersControllerTests.cs
+========================================
+using CSharpInterviewPrep.Exercises;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Xunit;
+
+namespace CSharpInterviewPrep.Tests;
+
+public class OrdersControllerTests
+{
+    private readonly AppDbContext _dbContext;
+    private readonly OrdersController _controller;
+    // Mock logger using a simple wrapper or NullLogger if preferred, 
+    // but here we use a simple stub since we don't assert logs in unit tests typically.
+    private readonly Microsoft.Extensions.Logging.ILogger<OrdersController> _logger;
+
+    public OrdersControllerTests()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Unique DB per test
+            .Options;
+
+        _dbContext = new AppDbContext(options);
+        _dbContext.Database.EnsureCreated();
+
+        // Stub logger
+        using var factory = LoggerFactory.Create(builder => builder.AddConsole());
+        _logger = factory.CreateLogger<OrdersController>();
+
+        // Stub Notification Service
+        var notificationService = new StubNotificationService();
+
+        _controller = new OrdersController(_dbContext, notificationService, _logger);
+    }
+
+    [Fact]
+    public async Task CreateOrder_ShouldReturnOk_WhenValid()
+    {
+        // Arrange
+        int userId = 1;
+        var productIds = new List<int> { 101, 101 }; // 2 items of ID 101 ($100 each)
+
+        // Act
+        var result = await _controller.CreateOrderAsync(userId, productIds);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var order = Assert.IsType<DB_Order>(okResult.Value);
+        
+        Assert.Equal(200, order.Total); // 100 + 100
+        Assert.Equal(userId, order.UserId);
+        
+        // Verify DB side effect
+        Assert.Equal(3, _dbContext.Products.Find(101)!.Stock); // Was 5, bought 2 -> 3
+    }
+
+    [Fact]
+    public async Task CreateOrder_ShouldFail_WhenProductOutOfStock()
+    {
+        // Arrange
+        int userId = 1;
+        var productIds = new List<int> { 102 }; // ID 102 has 0 stock
+
+        // Act
+        var result = await _controller.CreateOrderAsync(userId, productIds);
+
+        // Assert
+        // In our logic, it skips the item. If total is 0, it returns BadRequest.
+        Assert.IsType<BadRequestResult>(result);
+    }
+
+    [Fact]
+    public async Task GetOrder_ShouldReturnOrder_WhenExists()
+    {
+        // Arrange
+        var order = new DB_Order { UserId = 1, Total = 500, Date = DateTime.Now };
+        _dbContext.Orders.Add(order);
+        _dbContext.SaveChanges();
+
+        // Act
+        var result = await _controller.GetOrderByIdAsync(order.Id);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnedOrder = Assert.IsType<DB_Order>(okResult.Value);
+        Assert.Equal(500, returnedOrder.Total);
+    }
+
+    // Stub class for testing
+    class StubNotificationService : INotificationService
+    {
+        public Task NotifyMarketingSystemAsync(int userId, decimal amount) => Task.CompletedTask;
+    }
+}
+
+
+========================================
+FILE: CSharpInterviewPrep.Tests\StringAlgorithmsTests.cs
+========================================
+using CSharpInterviewPrep.Services;
+using Xunit;
+
+namespace CSharpInterviewPrep.Tests;
+
+public class StringAlgorithmsTests
+{
+    [Theory]
+    [InlineData("listen", "silent", true)]
+    [InlineData("hello", "world", false)]
+    [InlineData("hello", "holla", false)]
+    [InlineData("triangle", "integral", true)]
+    public void AreAnagrams_ShouldReturnExpectedResult(string word1, string word2, bool expected)
+    {
+        // Act
+        bool result = StringAlgorithms.AreAnagrams(word1, word2);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("madam", true)]
+    [InlineData("racecar", true)]
+    [InlineData("hello", false)]
+    [InlineData("A man a plan a canal Panama", true)] // Tests TwoPointer logic handling spaces/case
+    public void IsPalindromeTwoPointer_ShouldReturnExpectedResult(string input, bool expected)
+    {
+        bool result = StringAlgorithms.IsPalindromeTwoPointer(input);
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void CountCharacters_ShouldCountCorrectly()
+    {
+        var input = "Hello";
+        var result = StringAlgorithms.CountCharacters(input);
+        
+        Assert.True(result.ContainsKey('h'));
+        Assert.Equal(1, result['h']);
+        Assert.True(result.ContainsKey('l'));
+        Assert.Equal(2, result['l']);
+    }
+
+    [Fact]
+    public void GetMostFrequentChar_ShouldReturnMostFrequent()
+    {
+        var input = "banana";
+        var result = StringAlgorithms.GetMostFrequentChar(input);
+        Assert.Equal('a', result);
+    }
+}
+
+
+========================================
+FILE: Exercises\A_CoreConcepts.cs
+========================================
+using CSharpInterviewPrep.Services;
+using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public static class A_CoreConcepts
+{
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 1: Core C# Concepts ---");
+
+        Console.WriteLine("--- Demonstrating CountCharacters ---");
+        var charCounts = StringAlgorithms.CountCharacters("hello world");
+        Console.WriteLine($"CountCharacters('hello world'): {charCounts.Count} distinct chars found.");
+
+        string input = "abracadabracdb";
+        char mostFrequentChar = StringAlgorithms.GetMostFrequentChar(input);
+        Console.WriteLine($"GetMostFrequentChar('{input}'): Most frequent char is '{mostFrequentChar}'.");
+
+        var products = new List<Product> { new() { Id = 1, Name = "Laptop" }, new() { Id = 2, Name = "Smartphone" } };
+        var productLookup = DataProcessingService.CreateProductLookup(products);
+        Console.WriteLine($"CreateProductLookup: Found {productLookup.Count} products.");
+
+        var numbers = new List<int> { 1, 2, 3, 4, 5, 6 };
+        var doubledEvens = DataProcessingService.FilterAndDoubleEvens(numbers);
+        Console.WriteLine($"FilterAndDoubleEvens: Found {doubledEvens.Count} even numbers, doubled them to {string.Join(", ", doubledEvens)}.");
+        
+        var orders = new List<Order>
+        {
+            new() { Category = "Electronics", Price = 100 },
+            new() { Category = "Books", Price = 50 },
+            new() { Category = "Electronics", Price = 200 }
+        };
+        var salesByCategory = DataProcessingService.GetSalesByCategory(orders);
+        Console.WriteLine($"GetSalesByCategory: Found {salesByCategory.Count} categories with total sales.");
+        foreach (var category in salesByCategory)
+        {
+            Console.WriteLine($"Category: {category.Key}, Total Sales: {category.Value:C}");
+        }
+        
+        var students = new List<Student> { new() { Name = "Alice", Grade = 95 }, new() { Name = "Bob", Grade = 80 }, new() { Name = "Charlie", Grade = 92 } };
+        var topStudents = DataProcessingService.GetTopStudents(students);
+        Console.WriteLine($"GetTopStudents: Top student is {topStudents.First().Name}.");
+
+        var base64Encoded = StringAlgorithms.EncodeToBase64("Hello World");
+        Console.WriteLine($"EncodeToBase64: Encoded string is {base64Encoded}.");
+        var decodedText = StringAlgorithms.DecodeFromBase64(base64Encoded);
+        Console.WriteLine($"DecodeFromBase64: Decoded string is {decodedText}.");
+
+        Console.WriteLine("--- Demonstrating PrintFibonacciSeries ---");
+
+        foreach(var num in NumericAlgorithms.GenerateFibonacciSeries(10))
+        {
+            Console.WriteLine(num);
+        }
+
+        Console.WriteLine("--- Demonstrating ReverseString ---");
+        string original = "Hello World";
+        string reversed = StringAlgorithms.ReverseString(original);
+        Console.WriteLine($"Original: {original}, Reversed: {reversed}");
+
+        Console.WriteLine("--- Demonstrating IsPalindrome ---");
+        string palindromeString = "madam";
+        bool isPalindrome = StringAlgorithms.IsPalindrome(palindromeString);
+        Console.WriteLine($"Is '{palindromeString}' a palindrome? {isPalindrome}");
+
+        Console.WriteLine("--- Demonstrating MergeSortedArrays ---");
+        int[] array1 = { 1, 3, 5 };
+        int[] array2 = { 2, 4, 6, 7 };
+        int[] mergedArray = ArrayAlgorithms.MergeSortedArrays(array1, array2);
+        Console.WriteLine($"Merged array: {string.Join(", ", mergedArray)}");
+        Console.WriteLine("---------------------------------\n");
+    }
+}
+
+
+========================================
+FILE: Exercises\B_ProblemSolving.cs
+========================================
+using CSharpInterviewPrep.Services;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public static class B_ProblemSolving
+{
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 2: Problem Solving ---");
+        bool isAnagram = StringAlgorithms.AreAnagrams("listen", "silent");
+        Console.WriteLine($"AreAnagrams('listen', 'silent'): {isAnagram}");
+
+        int? duplicate = ArrayAlgorithms.FindFirstDuplicate(new[] { 2, 5, 1, 2, 3 });
+        Console.WriteLine($"FindFirstDuplicate: Found {duplicate}");
+
+        string text = "This is a test. This test is only a test.";
+        var topWords = StringAlgorithms.GetTop10CommonWords(text);
+        Console.WriteLine("GetTop10CommonWords: Top words are:");
+        foreach (var word in topWords)
+        {
+            Console.WriteLine($"- {word}");
+        }
+
+        int[] originalArray = { 1, 2, 3, 4, 5 };
+        int[] rotated = ArrayAlgorithms.RotateArray(originalArray, 2);
+        Console.WriteLine($"RotateArray: Rotated array is {string.Join(", ", rotated)}");
+
+        Console.WriteLine("--- Demonstrating HasPairWithSum ---");
+        int[] numbers = { 1, 2, 5, 4, 3 };
+        int targetSum = 6;
+        bool hasPair = ArrayAlgorithms.HasPairWithSum(numbers, targetSum);
+        Console.WriteLine($"HasPairWithSum: Pair with sum {targetSum} exists: {hasPair}");
+
+        Console.WriteLine("--- Demonstrating FindSecondLargestNumber ---");
+        List<int> list = [3, 1, 4, 4, 5, 2];
+        int? secondLargest = ArrayAlgorithms.FindSecondLargestNumber(list);
+        Console.WriteLine($"Second largest number in {string.Join(", ", list)} is: {secondLargest}");
+        Console.WriteLine("---------------------------------\n");
+    }
+}
+
+
+========================================
+FILE: Exercises\C_AdvancedTopics.cs
+========================================
+using System.Diagnostics;
+using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public static class C_AdvancedTopics
+{
+    // --- Part 1: Concurrency - Thread Safety ---
+    public class NaiveCounter
+    {
+        private int _value = 0;
+        public void Increment()
+        {
+            _value++;
+        }
+        public int GetValue()
+        {
+            return _value;
+        }
+    }
+
+    public class LockCounter
+    {
+        private readonly Lock _lock = new();
+        private int _value = 0;
+        public void Increment()
+        {
+            lock (_lock) { _value++; }
+        }
+        public int GetValue()
+        {
+            lock (_lock) { return _value; }
+        }
+    }
+
+    public class InterlockedCounter
+    {
+        private int _value = 0;
+        public void Increment()
+        {
+            Interlocked.Increment(ref _value);
+        }
+        public int GetValue()
+        {
+            return Interlocked.CompareExchange(ref _value, 0, 0);
+        }
+    }
+
+    // --- Part 2: Concurrency - Asynchronous Programming ---
+    public class AsyncDataProcessor
+    {
+        private async Task<string> GetUserNameAsync(int userId)
+        {
+            await Task.Delay(1000); return "Natanel Doe";
+        }
+
+        private async Task<List<string>> GetUserPermissionsAsync(int userId)
+        {
+            await Task.Delay(1500);
+            return new List<string> { "read", "write" };
+        }
+
+        public async Task<UserProfile> ProcessUserDataAsync(int userId)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var nameTask = GetUserNameAsync(userId);
+            var permissionsTask = GetUserPermissionsAsync(userId);
+
+            await Task.WhenAll(nameTask, permissionsTask);
+
+            stopwatch.Stop();
+            Console.WriteLine($"Total async processing time: {stopwatch.ElapsedMilliseconds} ms (should be ~1500ms)");
+
+            return new UserProfile
+            {
+                Name = await nameTask,
+                Permissions = await permissionsTask
+            };
+        }
+    }
+
+    public static IEnumerable<Product> GetOrderedProducts(List<Product> allProducts, List<Order> allOrders)
+    {
+        var orderedProducts = new HashSet<int>(allOrders.Select(o => o.ProductId));
+        return allProducts.Where(p => orderedProducts.Contains(p.Id));
+    }
+
+    public static void DemonstrateRaceCondition()
+    {
+        Console.WriteLine("\n--- Demonstrating Race Condition ---");
+        var naiveCounter = new NaiveCounter();
+        RunCounterInParallel(naiveCounter.Increment);
+        Console.WriteLine($"Naive Counter Final Value: {naiveCounter.GetValue()} (Incorrect!)");
+
+        var interLockCounter = new InterlockedCounter();
+        RunCounterInParallel(interLockCounter.Increment);
+        Console.WriteLine($"Interlocked Counter Final Value: {interLockCounter.GetValue()} (Correct!)");
+
+        var lockCounter = new LockCounter();
+        RunCounterInParallel(lockCounter.Increment);
+        Console.WriteLine($"Lock Counter Final Value: {lockCounter.GetValue()} (Correct!)");
+    }
+
+    private static void RunCounterInParallel(Action incrementAction)
+    {
+        const int numThreads = 10;
+        const int incrementsPerThread = 100_000;
+        var threads = new List<Thread>();
+
+        for (int i = 0; i < numThreads; i++)
+        {
+            var thread = new Thread(() =>
+            {
+                for (int j = 0; j < incrementsPerThread; j++) { incrementAction(); }
+            });
+            threads.Add(thread);
+            thread.Start();
+        }
+
+        foreach (var thread in threads)
+        {
+            thread.Join();
+        }
+    }
+
+    public static async Task Run()
+    {
+        Console.WriteLine("--- Section 3: Advanced Topics ---");
+
+        DemonstrateRaceCondition();
+
+        var processor = new AsyncDataProcessor();
+        var profile = await processor.ProcessUserDataAsync(123);
+        Console.WriteLine($"Fetched profile for: {profile.Name}");
+
+        Console.WriteLine("--- Demonstrating GetOrderedProducts ---");
+        var products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Laptop" },
+            new Product { Id = 2, Name = "Smartphone"},
+            new Product { Id = 3, Name = "Tablet" }
+        };
+        var orders = new List<Order>
+        {
+            new Order { ProductId = 1, Category = "Electronics", Price = 1000 },
+            new Order { ProductId = 1, Category = "Electronics", Price = 500 },
+            new Order { ProductId = 3, Category = "Electronics", Price = 300 }
+        };
+
+        var orderedProducts = GetOrderedProducts(products, orders);
+        Console.WriteLine("Ordered products:");
+        foreach (var product in orderedProducts)
+        {
+            Console.WriteLine($"- {product.Name}");
+        }
+
+        Console.WriteLine("---------------------------------\n");
+    }
+}
+
+
+========================================
+FILE: Exercises\D_ObjectOrientedProgramming.cs
+========================================
+using Microsoft.Extensions.Caching.Memory;
+using System.Diagnostics;
+using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep.Exercises;
+
+// --- Part 1: Strategy Factory Pattern ---
+// 1. הגדרת החוזה (הממשק)
+public interface IShippingStrategy
+{
+    decimal CalculateShippingCost(Order order);
+}
+
+// 2. מימושים קונקרטיים לאסטרטגיות
+public class WeightShippingStrategy : IShippingStrategy
+{
+    public decimal CalculateShippingCost(Order order) => order.TotalWeight * 1.5m;
+}
+
+public class ExpressShippingStrategy : IShippingStrategy
+{
+    public decimal CalculateShippingCost(Order order) => 25.0m; // מחיר קבוע למשלוח מהיר
+}
+
+public class FreeShippingStrategy : IShippingStrategy
+{
+    public decimal CalculateShippingCost(Order order) => 0.0m; // חינם
+}
+
+public class DistanceShippingStrategy : IShippingStrategy
+{
+    public decimal CalculateShippingCost(Order order)
+    {
+        const decimal distance = 10.0m; // נניח שהמרחק הוא 10 קילומטרים
+        return distance * 2.0m; // מחיר לקילומטר
+    }
+}
+
+// 3. ה-Factory שיודע ליצור את האסטרטגיה הנכונה
+public static class ShippingStrategyFactory
+{
+    public static IShippingStrategy GetStrategy(string strategyType)
+    {
+        return strategyType.ToLower() switch
+        {
+            "weight" => new WeightShippingStrategy(),
+            "express" => new ExpressShippingStrategy(),
+            "free" => new FreeShippingStrategy(),
+            "distance" => new DistanceShippingStrategy(),
+            _ => throw new NotSupportedException("This shipping type is not supported.")
+        };
+    }
+}
+
+// --- Part 2: Singleton Pattern ---
+public sealed class ConfigurationManager
+{
+    private static readonly Lazy<ConfigurationManager> lazyInstance =
+        new Lazy<ConfigurationManager>(() => new ConfigurationManager());
+
+    public static ConfigurationManager Instance => lazyInstance.Value;
+
+    private Dictionary<string, string> _settings = new();
+
+    // הבנאי הוא פרטי כדי למנוע יצירה מבחוץ
+    private ConfigurationManager()
+    {
+        // טוען הגדרות מקובץ או ממקור אחר
+        Console.WriteLine("ConfigurationManager instance created.");
+        _settings.Add("DatabaseConnectionString", "server=prod;db=main");
+        _settings.Add("ApiEndpoint", "https://api.example.com");
+        _settings.Add("CacheTimeout", "300");
+        _settings.Add("LoggingLevel", "Info");
+        _settings.Add("FeatureToggle_NewFeature", "true");
+        _settings.Add("FeatureToggle_OldFeature", "false");
+        _settings.Add("FeatureToggle_ExperimentalFeature", "true");
+        _settings.Add("FeatureToggle_AnotherFeature", "false");
+    }
+
+    public string GetSetting(string key)
+    {
+        return _settings.GetValueOrDefault(key, "default_value");
+    }
+}
+
+// --- Part 3: Adapter Pattern ---
+// הממשק הישן והלא תואם (למשל, מספרייה חיצונית)
+public class LegacyLogger
+{
+    public void WriteEntry(string message)
+    {
+        Console.WriteLine($"Legacy Log: {message}");
+    }
+}
+
+// הממשק המודרני והסטנדרטי במערכת שלנו
+public interface ILogger
+{
+    void Log(string message);
+}
+
+// המתאם! הוא מממש את הממשק שלנו, אבל "עוטף" את הלוגר הישן
+public class LoggerAdapter : ILogger
+{
+    private readonly LegacyLogger _legacyLogger = new LegacyLogger();
+
+    public void Log(string message)
+    {
+        // כאן מתבצע התרגום: קריאה למתודה המודרנית מפעילה את המתודה הישנה
+        _legacyLogger.WriteEntry(message);
+    }
+}
+
+// --- Part 4: Observer Pattern (Events & Delegates) ---
+// ה-"נושא" (המוצר בחנות)
+public class ProductEvent
+{
+    public event EventHandler<PriceChangedEventArgs>? PriceChanged;
+
+    private decimal _price;
+    public decimal Price
+    {
+        get => _price;
+        set
+        {
+            if (_price == value) return;
+            var oldPrice = _price;
+            _price = value;
+            // "יורה" את האירוע לכל מי שמאזין
+            PriceChanged?.Invoke(this, new PriceChangedEventArgs { OldPrice = oldPrice, NewPrice = _price });
+        }
+    }
+}
+
+public class PriceChangedEventArgs : EventArgs
+{
+    public decimal OldPrice { get; set; }
+    public decimal NewPrice { get; set; }
+}
+
+// ה-"צופה" (הלקוח שמעוניין במוצר)
+public class Customer
+{
+    public void OnPriceChanged(object? sender, PriceChangedEventArgs e)
+    {
+        Console.WriteLine($"Price changed! Old: {e.OldPrice:C}, New: {e.NewPrice:C}. I should consider buying!");
+    }
+}
+
+// --- Part 5: Struct vs Class ---
+public readonly struct Money
+{
+    public decimal Amount { get; }
+    public string Currency { get; }
+
+    public Money(decimal amount, string currency)
+    {
+        Amount = amount;
+        Currency = currency;
+    }
+
+    // פעולה שמחזירה אובייקט Money חדש
+    public Money Add(Money other)
+    {
+        if (Currency != other.Currency)
+        {
+            throw new InvalidOperationException("Cannot add money of different currencies.");
+        }
+        return new Money(Amount + other.Amount, Currency);
+    }
+
+    public override string ToString() => $"{Amount:F2} {Currency}";
+}
+
+// --- Part 6: Auction System (Events) ---
+public class NewBidEventArgs : EventArgs
+{
+    public decimal BidAmount { get; set; }
+    public required string BidderName { get; set; }
+}
+
+public class AuctionItem
+{
+    // הגדרת האירוע. הוא משתמש ב-delegate הגנרי EventHandler
+    public event EventHandler<NewBidEventArgs>? NewBidPlaced;
+
+    public string Name { get; }
+    public decimal CurrentHighestBid { get; private set; } = 0;
+
+    public AuctionItem(string name)
+    {
+        Name = name;
+    }
+
+    public void PlaceBid(string bidderName, decimal amount)
+    {
+        if (amount > CurrentHighestBid)
+        {
+            Console.WriteLine($"\n{bidderName} placed a new high bid of {amount:C} for {Name}!");
+            CurrentHighestBid = amount;
+            // "ירי" של האירוע לכל המאזינים
+            OnNewBidPlaced(new NewBidEventArgs { BidAmount = amount, BidderName = bidderName });
+        }
+        else
+        {
+            Console.WriteLine($"{bidderName}'s bid of {amount:C} is not higher than the current bid.");
+        }
+    }
+
+    protected virtual void OnNewBidPlaced(NewBidEventArgs e)
+    {
+        NewBidPlaced?.Invoke(this, e);
+    }
+}
+
+// 3. ה"צופה" (Observer) - המציע במכירה
+public class Bidder
+{
+    public string Name { get; }
+
+    public Bidder(string name)
+    {
+        Name = name;
+    }
+
+    // זוהי המתודה שתופעל כשהאירוע יקרה
+    public void OnNewBidPlacedHandler(object? sender, NewBidEventArgs e)
+    {
+        // אם אני לא זה שהצעתי את ההצעה, אני מקבל התראה
+        if (e.BidderName != Name)
+        {
+            Console.WriteLine($"  -> {Name} notified: New highest bid of {e.BidAmount:C} was placed by {e.BidderName}.");
+        }
+    }
+}
+
+// --- Part 7: Polymorphism & Interface Injection (Notification System) ---
+public interface INotificationSender
+{
+    Task SendAsync(string userId, string message);
+}
+
+public class EmailSender : INotificationSender
+{
+    public Task SendAsync(string userId, string message)
+    {
+        Console.WriteLine($"Email sent to {userId}: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+public class SmsSender : INotificationSender
+{
+    public Task SendAsync(string userId, string message)
+    {
+        Console.WriteLine($"SMS sent to {userId}: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+public class WhatsAppSender : INotificationSender
+{
+    public Task SendAsync(string userId, string message)
+    {
+        Console.WriteLine($"WhatsApp sent to {userId}: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+public class NotificationService
+{
+    private readonly IEnumerable<INotificationSender> _senders;
+    public NotificationService(IEnumerable<INotificationSender> senders)
+    {
+        _senders = senders;
+    }
+
+    public async Task SendAllNotificationsAsync(string userId, string message)
+    {
+        await Task.WhenAll(_senders.Select(s => s.SendAsync(userId, message)));
+    }
+}
+
+// --- Part 8: Decorator Pattern (Caching) ---
+public interface IRepository
+{
+    Task<string> GetById(int id);
+}
+
+public class SlowRepository : IRepository // A "real" repository that is slow
+{
+    public async Task<string> GetById(int id)
+    {
+        Console.WriteLine($"--> Querying database for ID: {id}...");
+        await Task.Delay(2000); // Simulate slow DB call
+        return $"Data for {id}";
+    }
+}
+
+public class CachingRepository : IRepository // The decorator
+{
+    private readonly IRepository _decorated;
+    private readonly IMemoryCache _cache;
+    private MemoryCacheEntryOptions _cacheOptions;
+
+
+    public CachingRepository(IRepository decorated, IMemoryCache cache)
+    {
+        _decorated = decorated;
+        _cache = cache;
+        _cacheOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
+        };
+    }
+
+    public async Task<string> GetById(int id)
+    {
+        string cacheKey = $"data_{id}";
+        var cachedData = _cache.Get<string>(cacheKey);
+        if (cachedData != null)
+        {
+            Console.WriteLine($"--> Cache hit for ID: {id}");
+            return cachedData;
+        }
+        Console.WriteLine($"--> Cache miss for ID: {id}");
+        var data = await _decorated.GetById(id);
+        _cache.Set(cacheKey, data, _cacheOptions);
+        return data;
+    }
+}
+
+
+public static class D_ObjectOrientedProgramming
+{
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 4: Object-Oriented Programming ---");
+
+        Console.WriteLine("--- Demonstrating Object-Oriented Programming Concepts ---");
+
+        var shippingStrategy = ShippingStrategyFactory.GetStrategy("weight");
+        var order = new Order { TotalWeight = 10.0m, Category = "Books" };
+        var shippingCost = shippingStrategy.CalculateShippingCost(order);
+        Console.WriteLine($"Shipping cost using WeightShippingStrategy: {shippingCost:C}");
+        var configManager = ConfigurationManager.Instance;
+        //Console.WriteLine($"ConfigurationManager instance created with settings: {string.Join(", ", configManager.Settings.Select(kv => $"{kv.Key}={kv.Value}"))}"); 
+        //Console.WriteLine($"ConfigurationManager instance created with settings: {configManager.Settings.Count} settings loaded.");
+        //Console.WriteLine($"DatabaseConnectionString: {configManager.Settings["DatabaseConnectionString"]}");
+        //Console.WriteLine($"ApiEndpoint: {configManager.Settings["ApiEndpoint"]}");
+        //Console.WriteLine($"CacheTimeout: {configManager.Settings["CacheTimeout"]} seconds");
+
+        // demonstration of the LegacyLogger
+        Console.WriteLine("--- Demonstrating Legacy Logger ---");
+        var legacyLogger = new LegacyLogger();
+        legacyLogger.WriteEntry("This is a log message from the legacy logger.");
+
+
+        Console.WriteLine("Legacy logger has been successfully used to log a message.");
+
+        // demonstration of the ProductEvent
+        var productEvent = new ProductEvent { Price = 100 };
+        var customer1 = new Customer();
+
+        // הלקוח "נרשם" לקבל התראות על שינויים במחיר
+        productEvent.PriceChanged += customer1.OnPriceChanged;
+
+        // שינוי המחיר יפעיל אוטומטית את המתודה של הלקוח
+        productEvent.Price = 90;
+
+        Console.WriteLine("\n--- Struct vs. Class Demo (Money Struct) ---");
+        var price1 = new Money(100, "USD");
+        var tax = new Money(15, "USD");
+
+        var totalPrice = price1.Add(tax); // הפעולה יצרה אובייקט חדש
+
+        Console.WriteLine($"Price 1: {price1}"); // price1 לא השתנה, הוא עדיין 100 USD
+        Console.WriteLine($"Total Price: {totalPrice}");
+
+        Console.WriteLine("\n--- Delegate & Event Demo (Auction) ---");
+
+        var artPiece = new AuctionItem("Mona Lisa");
+        var bidder1 = new Bidder("Alice");
+        var bidder2 = new Bidder("Bob");
+
+        // שני המציעים "נרשמים" לקבל התראות
+        artPiece.NewBidPlaced += bidder1.OnNewBidPlacedHandler;
+        artPiece.NewBidPlaced += bidder2.OnNewBidPlacedHandler;
+
+        artPiece.PlaceBid("Charlie", 100); // אליס ובוב יקבלו התראה
+        artPiece.PlaceBid("Alice", 150);   // רק בוב יקבל התראה
+        artPiece.PlaceBid("Dave", 120);    // אף אחד לא יקבל התראה, ההצעה נמוכה מדי
+
+        // Moved from Advanced Topics
+        Console.WriteLine("\n--- Demonstrating Flexible Notification System ---");
+        var emailSender = new EmailSender();
+        var smsSender = new SmsSender();
+        var whatsappSender = new WhatsAppSender();
+        var notificationService = new NotificationService(new List<INotificationSender> { emailSender, smsSender, whatsappSender });
+        // NOTE: This is async but running synchronously here for simplicity in this void method, 
+        // or we could change Run to async Task.
+        notificationService.SendAllNotificationsAsync("user123", "Your order has been shipped!").Wait();
+
+        Console.WriteLine("\n--- Demonstrating Caching Decorator Pattern ---");
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        IRepository repository = new CachingRepository(new SlowRepository(), cache);
+
+        Console.WriteLine("First call (should be slow):");
+        var stopwatch = Stopwatch.StartNew();
+        stopwatch.Start();
+        repository.GetById(123).Wait();
+        stopwatch.Stop();
+        Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine("\nSecond call (should be fast and from cache):");
+        stopwatch.Restart();
+        repository.GetById(123).Wait();
+        stopwatch.Stop();
+        Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
+
+        Console.WriteLine("---------------------------------\n");
+    }
+}
+
+
+========================================
+FILE: Exercises\E_SystemDesignProblems.cs
+========================================
+using System.Collections.Concurrent;
+using System.Reflection;
+using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public class E_SystemDesignProblems
+{
+    public class Leaderboard
+    {
+        private readonly Dictionary<int, int> _scores = new();
+        public void UpdateScore(int playerId, int score)
+        {
+            if (_scores.ContainsKey(playerId))
+            {
+                _scores[playerId] += score;
+            }
+            else
+            {
+                _scores[playerId] = score;
+            }
+        }
+
+        public List<int> GetTopPlayers(int count)
+        {
+            return _scores
+                .OrderByDescending(kv => kv.Value)
+                .Take(count)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+    }
+
+
+    public class BadHttpService
+    {
+        // ? ????: ????? HttpClient ??? ??? ????? ????? ?????? ??????? (Socket Exhaustion)
+        public async Task<string> FetchDataAsync(string url)
+        {
+            using (var client = new HttpClient())
+            {
+                return await client.GetStringAsync(url);
+            }
+        }
+    }
+
+    public class GoodHttpService
+    {
+        private static readonly HttpClient _httpClient = new HttpClient();
+        // ? ?????: ????? ?-HttpClient ???? ??? ????? ????? ???????
+        public async Task<string> FetchDataAsync(string url)
+        {
+            return await _httpClient.GetStringAsync(url);
+        }
+    }
+
+    // ???? ?-users ??? IQueryable<User> ????? ?-Entity Framework
+    public void ProcessAdmins_Bad(IQueryable<User> users)
+    {
+        var admins = users.Where(u => u.Role == "Admin");
+
+        if (admins.Any()) //  ?? ?????? ?????? ?-DB
+        {
+            Console.WriteLine($"Found {admins.Count()} admins."); // ?? ?????? ????? ?-DB
+
+            foreach (var admin in admins) // ?? ?????? ?????? ?-DB
+            {
+                Console.WriteLine($"Processing admin: {admin.Name}");
+            }
+        }
+    }
+
+    public void ProcessAdmins_Good(IQueryable<User> users)
+    {
+        List<User> admins = users.Where(u => u.Role == "Admin").ToList(); // ?? ?????? ??? ?-DB
+        if (admins.Any())
+        {
+            Console.WriteLine($"Found {admins.Count} admins.");
+            foreach (var admin in admins)
+            {
+                Console.WriteLine($"Processing admin: {admin.Name}");
+            }
+        }
+    }
+
+    public class LargeFileSorter
+    {
+        public void Sort(string largeFilePath, string sortedFilePath)
+        {
+            const int chunkSize = 100000; // ???? ????? ??? ???? ???????
+            var tempFiles = new List<string>();
+
+            // 1. ??? ?????? (Split)
+            using (var reader = new StreamReader(largeFilePath))
+            {
+                int fileCounter = 0;
+                while (!reader.EndOfStream)
+                {
+                    var chunk = new List<string>(chunkSize);
+                    for (int i = 0; i < chunkSize && !reader.EndOfStream; i++)
+                    {
+                        var line = reader.ReadLine();
+                        if (line != null)
+                        {
+                            chunk.Add(line);
+                        }
+                    }
+
+                    chunk.Sort(); // ???? ?? ???? ???????
+
+                    string tempFile = $"temp_{fileCounter++}.txt";
+                    File.WriteAllLines(tempFile, chunk);
+                    tempFiles.Add(tempFile);
+                }
+            }
+
+            // 2. ??? ?????? (Merge) - ??? ????? ????. ????? ??? ???? ????? ????.
+            var allLines = new List<string>();
+            foreach (var tempFile in tempFiles)
+            {
+                allLines.AddRange(File.ReadAllLines(tempFile));
+                File.Delete(tempFile);
+            }
+
+            allLines.Sort();
+            File.WriteAllLines(sortedFilePath, allLines);
+
+            Console.WriteLine("Large file sorted successfully.");
+        }
+    }
+
+    public class ChangeDetector
+    {
+
+        public static List<Change> FindChanges<T>(T oldState, T newState)
+        {
+            var changes = new List<Change>();
+            if (oldState == null || newState == null) return changes;
+
+            PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var prop in properties)
+            {
+                if (prop.GetIndexParameters().Length > 0)
+                {
+                    continue;
+                }
+
+                var oldValue = prop.GetValue(oldState);
+                var newValue = prop.GetValue(newState);
+
+                if (!Equals(oldValue, newValue))
+                {
+                    changes.Add(new Change
+                    {
+                        PropertyName = prop.Name,
+                        OldValue = oldValue?.ToString(),
+                        NewValue = newValue?.ToString()
+                    });
+                }
+            }
+            return changes;
+        }
+    }
+
+
+    public class ThreadSafeCounter
+    {
+        private int _value;
+        public int Value => _value;
+        public int Increment() => Interlocked.Increment(ref _value);
+    }
+
+    // 2. ?????? ?????? ????? ?? ?? ??????
+    public class LikeCounterService
+    {
+        private readonly ConcurrentDictionary<int, ThreadSafeCounter> _likeCounters = new();
+
+        /// <summary>
+        /// ???? '????' ???? ?????? ?? ????? ??? ????? ?????.
+        /// </summary>
+        public void Like(int songId)
+        {
+            // GetOrAdd ??? ????? ??????: ??? ?? ?????? ?? ????? ?????,
+            // ?? ????? ??? ??????? ???? ??????, ??????? ??? ???? ?? ??? ???.
+            ThreadSafeCounter counter = _likeCounters.GetOrAdd(songId, _ => new ThreadSafeCounter());
+
+            counter.Increment();
+        }
+
+        /// <summary>
+        /// ????? ?? ???? ??????? ?????? ???? ??? ?????.
+        /// </summary>
+        public int GetLikeCount(int songId)
+        {
+            // TryGetValue ??? ???? ?????? ????? ?-ConcurrentDictionary.
+            if (_likeCounters.TryGetValue(songId, out var counter))
+            {
+                return counter.Value;
+            }
+            return 0;
+        }
+    }
+
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 5: System Design Problems ---");
+        //demonstration of the Lederboard system
+        Console.WriteLine("--- Demonstrating Leaderboard System ---");
+        var leaderboard = new E_SystemDesignProblems.Leaderboard();
+        leaderboard.UpdateScore(1, 100);
+        leaderboard.UpdateScore(2, 200);
+
+        var topPlayers = leaderboard.GetTopPlayers(1);
+        Console.WriteLine($"Top player ID: {topPlayers.FirstOrDefault()}");
+        //demonstration of the BadHttpService and GoodHttpService
+        //Console.WriteLine("--- Demonstrating Bad and Good HTTP Services ---");
+        //var badService = new BadHttpService();
+        //try
+        //{
+        //    string badData = await badService.FetchDataAsync("http://example.com");
+        //    Console.WriteLine($"Bad HTTP Service fetched data: {badData.Substring(0, 50)}...");
+        //}
+        //catch (Exception ex)
+        //{
+        //    Console.WriteLine($"Bad HTTP Service error: {ex.Message}");
+        //}
+        //var goodService = new GoodHttpService();
+        //try
+        //{
+        //    string goodData = await goodService.FetchDataAsync("http://example.com");
+        //    Console.WriteLine($"Good HTTP Service fetched data: {goodData.Substring(0, 50)}...");
+        //}
+        //catch (Exception ex)
+        //{
+        //    Console.WriteLine($"Good HTTP Service error: {ex.Message}");
+        //}
+
+        //demonstration of the LargeFileSorter
+        Console.WriteLine("--- Demonstrating Large File Sorter ---");
+        //var largeFileSorter = new LargeFileSorter();
+        //var unsortedFilePath = "unsorted_numbers.txt"; // Assume this file exists with unsorted numbers
+        //var sortedFilePath = "sorted_numbers.txt";
+        //largeFileSorter.Sort(unsortedFilePath, sortedFilePath);
+        //Console.WriteLine($"Large file sorted and saved to {sortedFilePath}");
+
+
+        //demonstration of the ChangeDetector
+        Console.WriteLine("--- Demonstrating Change Detector ---");
+
+        //var fruitV1 = new Fruit
+        //{
+        //    Name = "Apple",
+        //    Color = "Red",
+        //    Price = 1.2m
+        //};
+
+        //var fruitV2 = new Fruit
+        //{
+        //    Name = "Apple",
+        //    Color = "Green",
+        //    Price = 1.3m
+        //};
+
+        //var changes = ChangeDetector.FindChanges(fruitV1, fruitV2);
+
+        //Console.WriteLine("Changes detected between fruitV1 and fruitV2:");
+        //if (changes.Any())
+        //{
+        //    foreach (var change in changes)
+        //    {
+        //        Console.WriteLine($"- Property '{change.PropertyName}' changed from '{change.OldValue}' to '{change.NewValue}'");
+        //    }
+        //}
+        //else
+        //{
+        //    Console.WriteLine("No changes found.");
+        //}
+
+
+        Console.WriteLine("\n--- System Design: Thread-Safe Like Counter Demo ---");
+        var likeService = new LikeCounterService();
+        const int songId = 123;
+        const int likesPerThread = 100_000;
+        const int numberOfThreads = 10;
+        const int expectedLikes = likesPerThread * numberOfThreads;
+
+        var threads = new List<Thread>();
+
+        for (int i = 0; i < numberOfThreads; i++)
+        {
+            var thread = new Thread(() =>
+            {
+                for (int j = 0; j < likesPerThread; j++)
+                {
+                    likeService.Like(songId);
+                }
+            });
+            threads.Add(thread);
+            thread.Start();
+        }
+
+        foreach (var thread in threads)
+        {
+            thread.Join(); // ???? ????? ?? ?-Threads
+        }
+
+        int finalCount = likeService.GetLikeCount(songId);
+        Console.WriteLine($"Final like count for song {songId}: {finalCount:N0}");
+        Console.WriteLine($"Expected like count: {expectedLikes:N0}");
+        Console.WriteLine($"Success: {finalCount == expectedLikes}");
+        Console.WriteLine("---------------------------------\n");
+    }
+}
+
+
+
+========================================
+FILE: Exercises\F_HighPerformance.cs
+========================================
+namespace CSharpInterviewPrep.Exercises
+{
+    public class F_HighPerformance
+    {
+        // --- Scenario 1: Parsing text without Allocations (Span<T>) ---
+        // ?????? Big Data, ????? ???????? (Substring) ??? ??? ?? ??? ????? ?????? ??? ???????.
+        // Span ????? ?????? ?? ??? ???????? ??? ?????? ????.
+
+        public static void CompareStringVsSpan()
+        {
+            string data = "User:JohnDoe|Role:Admin|Active:True|Region:IL";
+
+            // ? ???? ????? ????????? (?????? 4 ??????? ????? ???????)
+            string roleOld = data.Split('|')[1].Split(':')[1];
+
+            // ? ???? ?????? (0 ?????? ?????? - Zero Allocation)
+            ReadOnlySpan<char> span = data.AsSpan();
+            int roleIndex = span.IndexOf("Role:");
+            ReadOnlySpan<char> afterRole = span.Slice(roleIndex + 5); // ??? ?? "Role:"
+            int separatorIndex = afterRole.IndexOf('|');
+            ReadOnlySpan<char> roleVal = afterRole.Slice(0, separatorIndex);
+
+            Console.WriteLine($"Extracted Role (Span): {roleVal.ToString()}");
+            // ????: ????? ???????? ????? ?-roleVal ??????? ??? ????? ?-ToString ?? ????.
+        }
+
+        // --- Scenario 2: High Performance Structs (ref struct) ---
+        // ????? ?-Struct ????? Class ?????? ??? ?? ?-GC
+        public readonly struct Point3D
+        {
+            public readonly double X, Y, Z;
+            public Point3D(double x, double y, double z) => (X, Y, Z) = (x, y, z);
+        }
+
+        public static void ProcessPoints()
+        {
+            // ????? ?? ?-Stack (???? ????) ????? ?? ?-Heap
+            Span<Point3D> points = stackalloc Point3D[100];
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i] = new Point3D(i, i * 2, i + 5);
+            }
+            Console.WriteLine($"Processed {points.Length} points on the Stack instantly.");
+        }
+
+        public static void Run()
+        {
+            Console.WriteLine("--- Section 6: High Performance ---");
+            CompareStringVsSpan();
+            ProcessPoints();
+            Console.WriteLine("---------------------------------\n");
+        }
+    }
+}
+
+
+
+========================================
+FILE: Exercises\G_Controller.cs
+========================================
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore; // Added EF Core namespace
+using Microsoft.Extensions.Logging;
+
+namespace CSharpInterviewPrep.Exercises
+{
+    // --- Mocking ASP.NET Core Environment ---
+    [AttributeUsage(AttributeTargets.Method)]
+    public class HttpPostAttribute : Attribute { public HttpPostAttribute(string route) { } } 
+    [AttributeUsage(AttributeTargets.Method)]
+    public class HttpGetAttribute : Attribute { public HttpGetAttribute(string route = "") { } } 
+    [AttributeUsage(AttributeTargets.Method)]
+    public class HttpPutAttribute : Attribute { public HttpPutAttribute(string route) { } } 
+    [AttributeUsage(AttributeTargets.Method)]
+    public class HttpDeleteAttribute : Attribute { public HttpDeleteAttribute(string route) { } } 
+
+    public interface IActionResult { } 
+    public class OkResult : IActionResult { } 
+    public class OkObjectResult : IActionResult { public object Value { get; } public OkObjectResult(object value) { Value = value; } } 
+    public class BadRequestResult : IActionResult { } 
+    public class NotFoundResult : IActionResult { } 
+
+    // --- Database & Models ---
+    public class DB_User 
+    { 
+        public int Id { get; set; } 
+        public required string Email { get; set; } 
+    } 
+    
+    public class DB_Product 
+    { 
+        public int Id { get; set; } 
+        public decimal Price { get; set; } 
+        public int Stock { get; set; } 
+    } 
+    
+    public class DB_Order 
+    { 
+        public int Id { get; set; } 
+        public int UserId { get; set; } 
+        public decimal Total { get; set; } 
+        public DateTime Date { get; set; } 
+    } 
+
+    // ✅ REFACTORED: Using Real Entity Framework Core DbContext
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+        public DbSet<DB_User> Users { get; set; } 
+        public DbSet<DB_Product> Products { get; set; } 
+        public DbSet<DB_Order> Orders { get; set; } 
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Seed Data
+            modelBuilder.Entity<DB_User>().HasData(
+                new DB_User { Id = 1, Email = "test@test.com" }
+            );
+
+            modelBuilder.Entity<DB_Product>().HasData(
+                new DB_Product { Id = 101, Price = 100, Stock = 5 },
+                new DB_Product { Id = 102, Price = 50, Stock = 0 }
+            );
+        }
+    }
+
+    public interface INotificationService
+    {
+        Task NotifyMarketingSystemAsync(int userId, decimal amount);
+    }
+
+    public class MarketingNotificationService : INotificationService
+    {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public MarketingNotificationService(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
+
+        public async Task NotifyMarketingSystemAsync(int userId, decimal amount)
+        {
+            var client = _httpClientFactory.CreateClient();
+            Console.WriteLine($"[Async] Notification sent to Marketing OS for User {userId}.");
+            await Task.CompletedTask;
+        }
+    }
+
+    public class OrdersController
+    {
+        private readonly AppDbContext _dbContext;
+        private readonly INotificationService _notificationService;
+        private readonly Microsoft.Extensions.Logging.ILogger<OrdersController> _logger;
+
+        public OrdersController(AppDbContext dbContext, INotificationService notificationService, Microsoft.Extensions.Logging.ILogger<OrdersController> logger)
+        {
+            _dbContext = dbContext;
+            _notificationService = notificationService;
+            _logger = logger;
+        }
+
+        // 1. GET ALL
+        [HttpGet]
+        public async Task<IActionResult> GetAllOrdersAsync()
+        {
+            _logger.LogInformation("[GET] Fetching all orders...");
+            // Real EF Core async call
+            var orders = await _dbContext.Orders.ToListAsync(); 
+            _logger.LogInformation("Found {Count} orders.", orders.Count);
+            return new OkObjectResult(orders);
+        }
+
+        // 2. GET BY ID
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetOrderByIdAsync(int id)
+        {
+            _logger.LogInformation("[GET] Fetching order {Id}...", id);
+            var order = await _dbContext.Orders.FindAsync(id);
+            
+            if (order == null)
+            {
+                _logger.LogWarning("Order {Id} not found.", id);
+                return new NotFoundResult();
+            }
+
+            _logger.LogInformation("Order {Id} found. Total: {Total:C}", id, order.Total);
+            return new OkObjectResult(order);
+        }
+
+        // 3. CREATE (POST)
+        [HttpPost("create-order")]
+        public async Task<IActionResult> CreateOrderAsync(int userId, List<int> productIds)
+        {
+            _logger.LogInformation("[POST] Creating Order for User {UserId} with products: {ProductIds}", userId, string.Join(",", productIds));
+
+            try
+            {
+                var user = await _dbContext.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User {UserId} not found.", userId);
+                    return new BadRequestResult();
+                }
+
+                // Fetch products (EF Core translates this to IN clause)
+                var products = await _dbContext.Products
+                    .Where(p => productIds.Contains(p.Id))
+                    .ToListAsync();
+
+                decimal total = 0;
+
+                foreach (var pid in productIds)
+                {
+                    var product = products.FirstOrDefault(p => p.Id == pid);
+                    if (product == null || product.Stock <= 0)
+                    {
+                        _logger.LogWarning("Product {ProductId} is unavailable/out of stock. Skipping.", pid);
+                        continue;
+                    }
+
+                    total += product.Price;
+                    product.Stock--; 
+                    // EF Change Tracking will detect this modification automatically
+                }
+
+                if (total == 0)
+                {
+                    _logger.LogWarning("Order total is 0. Aborting.");
+                    return new BadRequestResult();
+                }
+
+                var order = new DB_Order 
+                { 
+                    // Id is auto-generated by EF Core (Identity)
+                    UserId = userId, 
+                    Total = total, 
+                    Date = DateTime.Now 
+                };
+                
+                await _dbContext.Orders.AddAsync(order);
+                await _dbContext.SaveChangesAsync(); // Atomic Transaction
+
+                _logger.LogInformation("✅ Order created! ID: {OrderId}, Total: {Total:C}", order.Id, total);
+
+                await _notificationService.NotifyMarketingSystemAsync(userId, total);
+
+                return new OkObjectResult(order);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CRITICAL ERROR creating order for user {UserId}", userId);
+                return new BadRequestResult();
+            }
+        }
+
+        // 4. UPDATE (PUT)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateOrderAsync(int id, decimal newTotal)
+        {
+            _logger.LogInformation("[PUT] Updating Order {OrderId} with new total {NewTotal:C}...", id, newTotal);
+            var order = await _dbContext.Orders.FindAsync(id);
+
+            if (order == null)
+            {
+                _logger.LogWarning("Order {OrderId} not found.", id);
+                return new NotFoundResult();
+            }
+
+            order.Total = newTotal;
+            await _dbContext.SaveChangesAsync();
+            
+            _logger.LogInformation("Order {OrderId} updated successfully.", id);
+            return new OkObjectResult(order);
+        }
+
+        // 5. DELETE
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOrderAsync(int id)
+        {
+            _logger.LogInformation("[DELETE] Deleting Order {OrderId}...", id);
+            var order = await _dbContext.Orders.FindAsync(id);
+
+            if (order == null)
+            {
+                _logger.LogWarning("Order {OrderId} not found.", id);
+                return new NotFoundResult();
+            }
+
+            _dbContext.Orders.Remove(order);
+            await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation("Order {OrderId} deleted successfully.", id);
+            return new OkResult();
+        }
+    }
+
+    public static class G_ControllerChallenge
+    {
+        public static void Run()
+        {
+            Console.WriteLine("--- Section 7: Controller Refactoring (Real EF Core + CRUD + Logging) ---");
+
+            var services = new ServiceCollection();
+            
+            // ✅ Setup Real EF Core with InMemory Database
+            services.AddDbContext<AppDbContext>(options => 
+                options.UseInMemoryDatabase("InterviewDB"));
+
+            // ✅ Add Logging
+            services.AddLogging(configure => configure.AddConsole());
+
+            services.AddHttpClient(); 
+            services.AddSingleton<INotificationService, MarketingNotificationService>();
+            services.AddScoped<OrdersController>(); // Controllers are usually Scoped
+
+            var provider = services.BuildServiceProvider();
+
+            // ✅ Ensure Database Created & Seeded
+            using (var scope = provider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.EnsureCreated();
+                
+                var controller = scope.ServiceProvider.GetRequiredService<OrdersController>();
+
+                // 1. Create
+                controller.CreateOrderAsync(1, new List<int> { 101, 102, 999 }).Wait();
+
+                // 2. Get All
+                controller.GetAllOrdersAsync().Wait();
+
+                // 3. Update (Id 1 created above)
+                controller.UpdateOrderAsync(1, 200.00m).Wait();
+
+                // 4. Get By Id
+                controller.GetOrderByIdAsync(1).Wait();
+
+                // 5. Delete
+                controller.DeleteOrderAsync(1).Wait();
+
+                // 6. Verify Deletion
+                controller.GetOrderByIdAsync(1).Wait();
+            }
+
+            Console.WriteLine("---------------------------------------------------\n");
+        }
+    }
+}
+
+
+
+========================================
+FILE: Exercises\H_Middleware.cs
+========================================
+using System.Diagnostics;
+
+namespace CSharpInterviewPrep.Exercises;
+
+// Middleware allows you to intercept requests BEFORE they reach the controller
+// and AFTER the controller finishes.
+public static class H_Middleware
+{
+    // A delegate representing the next middleware in the pipeline
+    public delegate Task RequestDelegate(string context);
+
+    // --- 1. Global Error Handling Middleware ---
+    // ??????: ????? ?? ????? ?????? ?????? ?????? ????? ?? ????
+    public class ErrorHandlingMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public ErrorHandlingMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task InvokeAsync(string context)
+        {
+            try
+            {
+                // ????? ?? ????? ???? ?-Middleware ???
+                await _next(context);
+            }
+            catch (Exception ex)
+            {
+                // ?? ???? ?????? ?????? ?????? - ????? ????? ?? ?? ???
+                Console.WriteLine($"[Global Error Handler] ?? Caught exception: {ex.Message}");
+                Console.WriteLine($"[Global Error Handler] Sending '500 Internal Server Error' to client.");
+            }
+        }
+    }
+
+    // --- 2. Performance Logging Middleware ---
+    // ??????: ????? ????? ??? ??? ???? ???? ?????
+    public class RequestTimingMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public RequestTimingMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task InvokeAsync(string context)
+        {
+            var watch = Stopwatch.StartNew();
+            Console.WriteLine($"[Performance] Started processing: {context}");
+
+            // ????? ?? ?????? ???? ??????? ??????
+            await _next(context);
+
+            // ???? ??? ?? *????* ???????? ???????
+            watch.Stop();
+            Console.WriteLine($"[Performance] Finished {context}. Time: {watch.ElapsedMilliseconds} ms");
+
+            if (watch.ElapsedMilliseconds > 500)
+            {
+                Console.WriteLine($"[Performance] WARNING: Request took too long!");
+            }
+        }
+    }
+
+    public static async Task Run()
+    {
+        Console.WriteLine("--- Section 8: Middleware Pipeline Simulation ---");
+
+        // The "Business Logic" (Simulating a Controller Endpoint)
+        // ?? ???? ??? ???? ??????
+        RequestDelegate finalEndpoint = async (ctx) =>
+        {
+            Console.WriteLine($"   --> Executing Business Logic for {ctx}...");
+
+            // ???????? ?? ?????
+            await Task.Delay(100);
+
+            // ???????? ?? ????? ????? ?????
+            if (ctx.Contains("crash"))
+            {
+                throw new InvalidOperationException("Something went wrong inside the Database!");
+            }
+
+            // ???????? ?? ??????
+            if (ctx.Contains("slow"))
+            {
+                await Task.Delay(600);
+            }
+        };
+
+        // Building the Pipeline: ErrorHandler -> Timing -> Logic
+        // ????? ????? ?? ?"????? ??????" ?????? ?????
+
+        // 1. ?????? ?? ??????? ?? ?????
+        var timingMiddleware = new RequestTimingMiddleware(finalEndpoint);
+        RequestDelegate timingDelegate = timingMiddleware.InvokeAsync;
+
+        // 2. ?????? ?? ?????? ?? ???? ??????
+        var errorMiddleware = new ErrorHandlingMiddleware(timingDelegate);
+
+        // Test 1: Successful Request 
+        Console.WriteLine("\nTest 1: Normal Request");
+        await errorMiddleware.InvokeAsync("/api/products");
+
+        // Test 2: Slow Request (Performance Warning) 
+        Console.WriteLine("\nTest 2: Slow Request");
+        await errorMiddleware.InvokeAsync("/api/heavy-report (slow)");
+
+        // Test 3: Crashing Request (Error Handling) 
+        Console.WriteLine("\nTest 3: Crashing Request");
+        await errorMiddleware.InvokeAsync("/api/buggy-feature (crash)");
+
+        Console.WriteLine("--------------------------------------\n");
+    }
+}
+
+
+========================================
+FILE: Exercises\I_CriticalConcepts.cs
+========================================
+using System.Reflection;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public static class I_CriticalConcepts
+{
+    // 1. Yield Return (Lazy Evaluation)    
+    // ?????: ?? ??? ??? ???? (?????? ?????). ????? ?? ????? ????? ?? ???? ???????.
+    // Yield Return ????? ??? "??????" ?? ????? ???? ???? ????.
+
+    public static IEnumerable<int> GetLargeDataset_Lazy()
+    {
+        Console.WriteLine("   -> Generator started...");
+        for (int i = 1; i <= 5; i++)
+        {
+            Console.WriteLine($"   -> Yielding item {i}...");
+            yield return i; // ?????? ????? ??? ??????? ???, ??????? ???? ???? ????!
+        }
+        Console.WriteLine("   -> Generator finished.");
+    }
+
+    public static List<int> GetLargeDataset_Eager()
+    {
+        Console.WriteLine("   -> Eager List creation started...");
+        var list = new List<int>();
+        for (int i = 1; i <= 5; i++)
+        {
+            Console.WriteLine($"   -> Adding item {i} to list...");
+            list.Add(i);
+        }
+        Console.WriteLine("   -> Eager List creation finished.");
+        return list;
+    }
+
+    
+    // 2. Reflection & Custom Attributes
+    // ?????: ????? ??????? ?????? ?????? ???? ???? (PII) ????? ??????? ??????.
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class SensitiveDataAttribute : Attribute { }
+
+    public class UserProfile
+    {
+        public required string Username { get; set; }
+
+        [SensitiveData] // ????? ?? ???? ??? ?????
+        public required string Email { get; set; }
+
+        [SensitiveData]
+        public required string PhoneNumber { get; set; }
+
+        public required string Role { get; set; }
+    }
+
+    public static void PrintSafe(object obj)
+    {
+        Type type = obj.GetType();
+        PropertyInfo[] properties = type.GetProperties();
+
+        Console.WriteLine($"Printing safe data for: {type.Name}");
+        foreach (var prop in properties)
+        {
+            var value = prop.GetValue(obj)?.ToString();
+
+            // ????? ??????? Reflection ??? ?? Attribute ?? ???????
+            if (Attribute.IsDefined(prop, typeof(SensitiveDataAttribute)))
+            {
+                value = "*** REDACTED ***";
+            }
+
+            Console.WriteLine($" - {prop.Name}: {value}");
+        }
+    }
+
+    // 3. IDisposable Pattern
+    // ?????: ????? ??????? ???? ?????? (??? ???? ???? ?? ????? ???) ?????? ????? ????.
+
+    public class DatabaseConnectionHandler : IDisposable
+    {
+        private bool _disposed = false;
+        public string ConnectionName { get; }
+
+        public DatabaseConnectionHandler(string name)
+        {
+            ConnectionName = name;
+            Console.WriteLine($"[Resource] Connection '{name}' opened.");
+        }
+
+        public void ExecuteQuery()
+        {
+            if (_disposed) throw new ObjectDisposedException(ConnectionName);
+            Console.WriteLine($"[Resource] Executing query on '{ConnectionName}'...");
+        }
+
+        // 1. Public implementation of Dispose pattern callable by consumers.
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this); // ???? ?-GC: "??? ??? ??????, ?? ???? ?? ?-Finalizer"
+        }
+
+        // 2. Protected implementation of Dispose pattern.
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                // Free managed resources here (Example: close Stream, clear List)
+                Console.WriteLine($"[Resource] Connection '{ConnectionName}' closed cleanly (Managed).");
+            }
+
+            // Free unmanaged resources here (if any)
+            _disposed = true;
+        }
+
+        // 3. Finalizer (Destructor) - ?? ????? ????? ????? Dispose
+        ~DatabaseConnectionHandler()
+        {
+            Dispose(false);
+            Console.WriteLine($"[Resource] Connection '{ConnectionName}' finalized by GC (Safety Net).");
+        }
+    }
+
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 9: Critical C# Concepts ---\n");
+
+        // --- Demo 1: Yield Return ---
+        Console.WriteLine("1. Testing Lazy Evaluation (Yield Return):");
+        // ???? ??: ?????? ????? ?? ?????, ??? ?? ??????? ????? ????!
+        foreach (var item in GetLargeDataset_Lazy())
+        {
+            Console.WriteLine($"   Consumer received: {item}");
+            if (item == 3)
+            {
+                Console.WriteLine("   Consumer Stopping early! (Items 4 and 5 will NEVER be generated)");
+                break;
+            }
+        }
+        Console.WriteLine("\nvs Eager Evaluation (List):");
+        GetLargeDataset_Eager(); // ??? ???? ????
+
+        Console.WriteLine("\n--------------------------------------\n");
+
+        // --- Demo 2: Reflection ---
+        Console.WriteLine("2. Testing Reflection & Attributes:");
+        var user = new UserProfile
+        {
+            Username = "john_doe",
+            Email = "john@company.com",
+            PhoneNumber = "555-1234",
+            Role = "Admin"
+        };
+        PrintSafe(user);
+
+        Console.WriteLine("\n--------------------------------------\n");
+
+        // --- Demo 3: IDisposable ---
+        Console.WriteLine("3. Testing IDisposable:");
+
+        // ?????? ?????: using statement ?????? ????? ?-Dispose ???? ?????
+        using (var db = new DatabaseConnectionHandler("ProductionDB"))
+        {
+            db.ExecuteQuery();
+        } // Dispose ???? ???????? ???
+
+        Console.WriteLine("End of scope.");
+    }
+}
+
+
+========================================
+FILE: Exercises\J_ConcurrencyPatterns.cs
+========================================
+using System.Threading.Channels;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public static class J_ConcurrencyPatterns
+{
+    // Scenario: High-volume data ingestion (e.g., IoT signals, Clickstream data)
+    // Requirement: We need to ingest data fast (Producer) and process it in the background (Consumer)
+    // without blocking the main thread or losing data.
+    // Solution: System.Threading.Channels (The "Go-style" channels for .NET)
+
+    public record DataMessage(int Id, string Payload, DateTime Timestamp);
+
+    public static async Task Run()
+    {
+        Console.WriteLine("--- Section 10: Concurrency Patterns (Producer-Consumer) ---");
+
+        // 1. Create a Bounded Channel
+        // "Bounded" provides backpressure. If the consumer is too slow, the producer will wait 
+        // instead of crashing memory with infinite queued items.
+        var channelOptions = new BoundedChannelOptions(capacity: 100)
+        {
+            FullMode = BoundedChannelFullMode.Wait, // Wait for space if full
+            SingleReader = false, // Multiple consumers allowed
+            SingleWriter = true   // Single producer
+        };
+
+        var channel = Channel.CreateBounded<DataMessage>(channelOptions);
+
+        Console.WriteLine("[System] Starting Pipeline...");
+
+        // 2. Start Consumers (Workers)
+        // We'll simulate 2 consumers processing data in parallel
+        var consumerTask1 = ProcessMessagesAsync(channel.Reader, 1);
+        var consumerTask2 = ProcessMessagesAsync(channel.Reader, 2);
+
+        // 3. Start Producer
+        var producerTask = ProduceMessagesAsync(channel.Writer);
+
+        // Wait for producer to finish writing
+        await producerTask;
+
+        // Wait for consumers to finish processing (they stop when channel completes)
+        await Task.WhenAll(consumerTask1, consumerTask2);
+
+        Console.WriteLine("[System] Pipeline Finished.");
+        Console.WriteLine("--------------------------------------\n");
+    }
+
+    private static async Task ProduceMessagesAsync(ChannelWriter<DataMessage> writer)
+    {
+        for (int i = 1; i <= 20; i++)
+        {
+            var msg = new DataMessage(i, "Log_Entry_" + i, DateTime.UtcNow);
+            
+            // WriteAsync will wait if the channel is full (Backpressure handling)
+            await writer.WriteAsync(msg);
+            
+            Console.WriteLine($" -> [Producer] Pushed message {i}");
+            
+            // Simulate variable ingestion speed
+            await Task.Delay(50); 
+        }
+
+        // Signal that no more items will be written
+        writer.Complete();
+        Console.WriteLine(" -> [Producer] Complete. Channel closed.");
+    }
+
+    private static async Task ProcessMessagesAsync(ChannelReader<DataMessage> reader, int workerId)
+    {
+        // ReadAllAsync is an IAsyncEnumerable - efficient iteration
+        await foreach (var msg in reader.ReadAllAsync())
+        {
+            // Simulate processing work (e.g., writing to DB, calling external API)
+            await Task.Delay(150); 
+            
+            Console.WriteLine($"    <- [Worker {workerId}] Processed {msg.Id} ({msg.Payload})");
+        }
+        Console.WriteLine($"    <- [Worker {workerId}] Done.");
+    }
+}
+
+
+
+========================================
+FILE: Exercises\K_Resilience.cs
+========================================
+namespace CSharpInterviewPrep.Exercises;
+
+public static class K_Resilience
+{
+    // Scenario: Communicating with an unstable Microservice or 3rd Party API.
+    // Requirement: Transient failures (network blips, timeouts) shouldn't crash our app.
+    // Solution: Retry Pattern with Exponential Backoff (Clean implementation without external libs like Polly for demo)
+
+    public static async Task Run()
+    {
+        Console.WriteLine("--- Section 11: Microservices Resilience (Retry Pattern) ---");
+
+        var unstableService = new ExternalService();
+
+        Console.WriteLine("Attempting to fetch data from unstable service...");
+
+        try
+        {
+            // Execute the operation with retry logic
+            string result = await ExecuteWithRetryAsync(
+                action: () => unstableService.FetchDataAsync(),
+                maxRetries: 3,
+                delayMilliseconds: 500
+            );
+
+            Console.WriteLine($"✅ Success! Result: {result}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Operation failed after retries. Final Error: {ex.Message}");
+        }
+
+        Console.WriteLine("--------------------------------------\n");
+    }
+
+    // Generic Retry Logic
+    private static async Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> action, int maxRetries, int delayMilliseconds)
+    {
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                return await action();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"   [Warning] Attempt {attempt} failed: {ex.Message}");
+
+                if (attempt == maxRetries)
+                {
+                    // If this was the last attempt, rethrow the exception
+                    throw; 
+                }
+
+                // Exponential Backoff: Wait longer between each retry (500ms -> 1000ms -> 2000ms...)
+                // Jitter (randomness) is often added here in production to prevent "Thundering Herd" problem.
+                int waitTime = delayMilliseconds * (int)Math.Pow(2, attempt - 1);
+                
+                Console.WriteLine($"   -> Waiting {waitTime}ms before retry...");
+                await Task.Delay(waitTime);
+            }
+        }
+        throw new InvalidOperationException("Should not be reached");
+    }
+
+    // Simulation of a flaky service
+    public class ExternalService
+    {
+        private int _callCount = 0;
+
+        public async Task<string> FetchDataAsync()
+        {
+            _callCount++;
+            await Task.Delay(200); // Simulate network latency
+
+            // Simulate failure for the first 2 calls, success on the 3rd
+            if (_callCount < 3)
+            {
+                throw new HttpRequestException("503 Service Unavailable");
+            }
+
+            return "Payload_From_Microservice";
+        }
+    }
+}
+
+
+
+========================================
+FILE: Exercises\L_MemoryManagement.cs
+========================================
+using System.Diagnostics;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public static class L_MemoryManagement
+{
+    // 1. Span<T> and StackAlloc (Zero Allocation Slicing)
+    // רלוונטי לביצועים גבוהים: מניעת הקצאות זיכרון מיותרות ב-Heap
+    // Scenario: Parsing a large string (e.g., Log entry, DNA sequence, CSV line) without creating new substrings.
+
+    public static void SpanDemo()
+    {
+        Console.WriteLine("1. Span<T> vs Substring (Memory Allocation):");
+
+        string dateString = "2026-01-19"; // YYYY-MM-DD
+
+        // BAD: Creating new strings for each part (Allocates on Heap)
+        string yearStr = dateString.Substring(0, 4);
+        string monthStr = dateString.Substring(5, 2);
+        string dayStr = dateString.Substring(8, 2);
+        
+        // GOOD: Using Span to "view" the memory without allocation
+        ReadOnlySpan<char> dateSpan = dateString.AsSpan();
+        ReadOnlySpan<char> yearSpan = dateSpan.Slice(0, 4);
+        ReadOnlySpan<char> monthSpan = dateSpan.Slice(5, 2);
+        ReadOnlySpan<char> daySpan = dateSpan.Slice(8, 2);
+
+        // Parsing directly from Span (Supported in modern .NET)
+        int year = int.Parse(yearSpan);
+        int month = int.Parse(monthSpan);
+        int day = int.Parse(daySpan);
+
+        Console.WriteLine($"   Parsed Date: {day}/{month}/{year} (Zero String Allocations!)");
+    }
+
+    // 2. Struct vs Class (Stack vs Heap) & Boxing
+    // Scenario: High-frequency data structures (e.g., Coordinates, Points in a game/map).
+
+    struct PointStruct { public int X, Y; }
+    class PointClass { public int X, Y; }
+
+    public static void StackVsHeapDemo()
+    {
+        Console.WriteLine("\n2. Stack (Struct) vs Heap (Class) Performance:");
+
+        const int iterations = 1_000_000;
+        var sw = Stopwatch.StartNew();
+
+        // Heap Allocation
+        for (int i = 0; i < iterations; i++)
+        {
+            var p = new PointClass { X = i, Y = i };
+        }
+        sw.Stop();
+        Console.WriteLine($"   Class (Heap) time: {sw.ElapsedMilliseconds}ms");
+
+        sw.Restart();
+
+        // Stack Allocation
+        for (int i = 0; i < iterations; i++)
+        {
+            var p = new PointStruct { X = i, Y = i };
+        }
+        sw.Stop();
+        Console.WriteLine($"   Struct (Stack) time: {sw.ElapsedMilliseconds}ms (Much faster!)");
+    }
+
+    
+    // 3. Boxing & Unboxing (Hidden Cost)
+    // מלכודת נפוצה: המרת Value Type ל-Reference Type (Object/Interface)
+
+    public static void BoxingDemo()
+    {
+        Console.WriteLine("\n3. Boxing & Unboxing Costs:");
+
+        int val = 123;
+        object boxed = val; // Boxing: Moves 'val' from Stack to Heap! (Expensive)
+        int unboxed = (int)boxed; // Unboxing: Extracting back to Stack.
+
+        Console.WriteLine($"   Value: {val}, Boxed: {boxed}, Unboxed: {unboxed}");
+        Console.WriteLine("   Rule: Avoid storing structs in List<object> or non-generic interfaces in hot paths.");
+    }
+
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 12: Memory Management & Performance ---");
+        SpanDemo();
+        StackVsHeapDemo();
+        BoxingDemo();
+        Console.WriteLine("---------------------------------------------------\n");
+    }
+}
+
+
+
+========================================
+FILE: Exercises\M_AsyncStreams.cs
+========================================
+using System.Runtime.CompilerServices;
+
+namespace CSharpInterviewPrep.Exercises;
+
+public static class M_AsyncStreams
+{
+    
+    // Scenario: Streaming Big Data to Frontend    
+    // In a "Big Data" environment, you often need to send large datasets 
+    // to the client (React) without loading everything into memory (RAM) or blocking the request.
+    // IAsyncEnumerable allows you to "stream" data item by item as it becomes available.
+
+    // Simulating a database fetch that takes time per item
+    public static async IAsyncEnumerable<int> FetchLargeDatasetAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        for (int i = 1; i <= 5; i++)
+        {
+            // Simulate async I/O work (DB query, External API call)
+            await Task.Delay(500, cancellationToken); 
+            
+            yield return i; // "Push" data to the caller immediately
+        }
+    }
+
+    // Simulating a Consumer (e.g., an API Controller or a Background Service)
+    public static async Task ConsumeStreamAsync()
+    {
+        Console.WriteLine("1. Consuming Async Stream (IAsyncEnumerable):");
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+
+        await foreach (var number in FetchLargeDatasetAsync())
+        {
+            Console.WriteLine($"   -> Received item {number} at {timer.Elapsed.TotalSeconds:F1}s");
+            // In a real API, you would write this to the Response.Body stream immediately.
+        }
+        Console.WriteLine("   Stream finished.");
+    }
+
+    // Scenario: Throttling / Rate Limiting Parallel Requests
+    // When dealing with many external APIs (Insurance providers), you can't just 
+    // fire 1000 requests at once. You need SemaphoreSlim to throttle.
+
+    public static async Task ThrottledExecutionDemo()
+    {
+        Console.WriteLine("\n2. Throttling Parallel Requests (SemaphoreSlim):");
+        
+        // Allow max 2 concurrent requests
+        using var semaphore = new SemaphoreSlim(2);
+        var tasks = new List<Task>();
+
+        for (int i = 1; i <= 5; i++)
+        {
+            int id = i;
+            tasks.Add(Task.Run(async () =>
+            {
+                Console.WriteLine($"   [Task {id}] Waiting to enter...");
+                await semaphore.WaitAsync(); // Decrement counter
+                try
+                {
+                    Console.WriteLine($"   [Task {id}] PROCESSING (Inside Critical Section)");
+                    await Task.Delay(1000); // Simulate work
+                }
+                finally
+                {
+                    Console.WriteLine($"   [Task {id}] Released.");
+                    semaphore.Release(); // Increment counter
+                }
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    public static async Task Run()
+    {
+        Console.WriteLine("--- Section 13: Async Streams & Concurrency Control ---");
+        await ConsumeStreamAsync();
+        await ThrottledExecutionDemo();
+        Console.WriteLine("-------------------------------------------------------\n");
+    }
+}
+
+
+
+========================================
+FILE: Exercises\N_ModernLinq.cs
+========================================
+namespace CSharpInterviewPrep.Exercises;
+
+public static class N_ModernLinq
+{
+    // Modern LINQ Features (.NET 6, 7, 8, 9)
+    // Demonstrating: CountBy, AggregateBy, Chunk, MaxBy, DistinctBy
+    
+    public static void Run()
+    {
+        Console.WriteLine("--- Section 14: Modern LINQ Features (.NET 6-9) ---");
+
+        var employees = new List<Employee>
+        {
+            new() { Id = 1, Name = "Alice", Department = "HR", Salary = 50000 },
+            new() { Id = 2, Name = "Bob", Department = "IT", Salary = 80000 },
+            new() { Id = 3, Name = "Charlie", Department = "HR", Salary = 55000 },
+            new() { Id = 4, Name = "Dave", Department = "IT", Salary = 85000 },
+            new() { Id = 5, Name = "Eve", Department = "Sales", Salary = 60000 },
+            new() { Id = 6, Name = "Frank", Department = "IT", Salary = 90000 }
+        };
+
+        // 1. MaxBy / MinBy (.NET 6)
+        // Returns the element that has the max/min value for the specified key.
+        var highestPaid = employees.MaxBy(e => e.Salary);
+        var lowestPaid = employees.MinBy(e => e.Salary);
+        Console.WriteLine($"1. MaxBy: Highest paid is {highestPaid?.Name} ({highestPaid?.Salary:C})");
+
+        // 2. DistinctBy (.NET 6)
+        // Returns distinct elements based on a specific key selector.
+        var distinctDepartments = employees.DistinctBy(e => e.Department).Select(e => e.Department);
+        Console.WriteLine($"2. DistinctBy: Departments found: {string.Join(", ", distinctDepartments)}");
+
+        // 3. Chunk (.NET 6)
+        // Splits the collection into chunks of a specified size. Great for batch processing.
+        var chunks = employees.Chunk(2);
+        Console.WriteLine("3. Chunk (Batch of 2):");
+        int chunkId = 1;
+        foreach (var chunk in chunks)
+        {
+            Console.WriteLine($"   Batch {chunkId++}: {string.Join(", ", chunk.Select(e => e.Name))}");
+        }
+
+        // 4. CountBy (.NET 9)
+        // Quickly counts the occurrences of keys. 
+        // Replaces: GroupBy(x => x.Key).Select(g => new { Key = g.Key, Count = g.Count() })
+        Console.WriteLine("4. CountBy (.NET 9): Employees per Department");
+        foreach (var entry in employees.CountBy(e => e.Department))
+        {
+            Console.WriteLine($"   {entry.Key}: {entry.Value}");
+        }
+
+        // 5. AggregateBy (.NET 9)
+        // Aggregates values based on a key.
+        // Replaces complex GroupBy + Sum/Aggregate logic.
+        Console.WriteLine("5. AggregateBy (.NET 9): Total Salary per Department");
+        
+        // KeySelector, Seed, Func<Accumulator, Element, Accumulator>
+        var salaryByDept = employees.AggregateBy(
+            keySelector: e => e.Department,
+            seed: 0m,
+            func: (total, emp) => total + emp.Salary
+        );
+
+        foreach (var entry in salaryByDept)
+        {
+            Console.WriteLine($"   {entry.Key}: {entry.Value:C}");
+        }
+        
+        // 6. Index (.NET 9)
+        // Provides the index along with the element in a tuple.
+        Console.WriteLine("6. Index (.NET 9): Enumerating with index");
+        foreach (var (index, employee) in employees.Index())
+        {
+             Console.WriteLine($"   Index {index}: {employee.Name}");
+        }
+
+        Console.WriteLine("---------------------------------------------------\n");
+    }
+
+    public class Employee
+    {
+        public int Id { get; set; }
+        public required string Name { get; set; }
+        public required string Department { get; set; }
+        public decimal Salary { get; set; }
+    }
+}
+
+
+
+========================================
+FILE: Models\ExerciseModels.cs
+========================================
+namespace CSharpInterviewPrep.Models
+{
+    public class ExerciseModels
+    {
+        public class Product
+        {
+            public int Id { get; set; }
+            public required string Name { get; set; }
+        }
+
+        public class Order
+        {
+            public int ProductId { get; set; }
+            public required string Category { get; set; }
+            public decimal Price { get; set; }
+            public decimal TotalWeight { get; internal set; }
+        }
+
+        public class Student
+        {
+            public required string Name { get; set; }
+            public int Grade { get; set; }
+        }
+
+        public class User
+        {
+            public int Id { get; set; }
+            public required string Name { get; set; }
+            public required string Email { get; set; }
+            public required string Role { get; set; }
+        }
+
+        public class UserProfile
+        {
+            public string? Name { get; set; }
+            public List<string>? Permissions { get; set; }
+            public List<string>? RecentActivity { get; set; }
+        }
+
+        public class Change
+        {
+            public string? PropertyName { get; set; }
+            public string? OldValue { get; set; }
+            public string? NewValue { get; set; }
+        }
+
+        public class Fruit
+        {
+            public required string Name { get; set; }
+            public required string Color { get; set; }
+            public decimal Price { get; set; }
+        }
+    }
+}
+
+
+
+========================================
+FILE: Services\ArrayAlgorithms.cs
+========================================
+namespace CSharpInterviewPrep.Services;
+
+/// <summary>
+/// Provides algorithms for array and collection manipulations.
+/// </summary>
+public static class ArrayAlgorithms
+{
+    /// <summary>
+    /// Finds the first duplicate number in an array.
+    /// </summary>
+    public static int? FindFirstDuplicate(int[] numbers)
+    {
+        var seenNumbers = new HashSet<int>();
+        foreach (var number in numbers)
+        {
+            if (!seenNumbers.Add(number))
+            {
+                return number;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Rotates an array to the right by k steps.
+    /// </summary>
+    public static int[] RotateArray(int[] arr, int k)
+    {
+        if (arr == null || arr.Length == 0)
+        {
+            throw new ArgumentException("Array cannot be empty.");
+        }
+        if (k < 0)
+        {
+            throw new ArgumentException("Rotation count cannot be negative.");
+        }
+
+        k = k % arr.Length;
+        if (k == 0) return (int[])arr.Clone();
+
+        int[] rotatedArray = new int[arr.Length];
+        Array.Copy(arr, arr.Length - k, rotatedArray, 0, k);
+        Array.Copy(arr, 0, rotatedArray, k, arr.Length - k);
+        return rotatedArray;
+    }
+
+    /// <summary>
+    /// Merges two sorted arrays into a single sorted array.
+    /// </summary>
+    public static int[] MergeSortedArrays(int[] arr1, int[] arr2)
+    {
+        int[] mergeArr = new int[arr1.Length + arr2.Length];
+        int i = 0, j = 0, m = 0;
+
+        while (i < arr1.Length && j < arr2.Length)
+        {
+            if (arr1[i] < arr2[j])
+            {
+                mergeArr[m++] = arr1[i++];
+            }
+            else
+            {
+                mergeArr[m++] = arr2[j++];
+            }
+        }
+
+        while (i < arr1.Length)
+        {
+            mergeArr[m++] = arr1[i++];
+        }
+        while (j < arr2.Length)
+        {
+            mergeArr[m++] = arr2[j++];
+        }
+
+        return mergeArr;
+    }
+
+    /// <summary>
+    /// Checks if there exists a pair of numbers in the array that sums up to the target.
+    /// </summary>
+    public static bool HasPairWithSum(int[] numbers, int target)
+    {
+        if (numbers == null || numbers.Length < 2)
+        {
+            return false;
+        }
+
+        // We sort the array first to use the two-pointer technique.
+        // Note: sorting modifies the array or requires a copy. Here we assume modification is allowed
+        // or the caller should pass a copy.
+        Array.Sort(numbers);
+        int left = 0, right = numbers.Length - 1;
+        while (left < right)
+        {
+            int sum = numbers[left] + numbers[right];
+
+            if (sum == target)
+                return true;
+
+            if (sum < target)
+            {
+                left++;
+            }
+            else
+            {
+                right--;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Finds the second largest number in a list of integers.
+    /// </summary>
+    public static int FindSecondLargestNumber(List<int> numbers)
+    {
+        if (numbers == null || numbers.Count < 2)
+            throw new ArgumentException("List must contain at least two numbers.");
+
+        int largest = int.MinValue;
+        int second = int.MinValue;
+
+        foreach (var number in numbers)
+        {
+            if (number > largest)
+            {
+                second = largest;
+                largest = number;
+            }
+            else if (number > second && number < largest)
+            {
+                second = number;
+            }
+        }
+        if (second == int.MinValue)
+        {
+             // This might happen if all numbers are the same, e.g., [5, 5, 5]
+             // The original logic threw an exception here, which we preserve.
+            throw new InvalidOperationException("There is no second largest number in the list.");
+        }
+        return second;
+    }
+}
+
+
+========================================
+FILE: Services\DataProcessingService.cs
+========================================
+using static CSharpInterviewPrep.Models.ExerciseModels;
+
+namespace CSharpInterviewPrep.Services;
+
+/// <summary>
+/// Provides methods for processing collections of data using LINQ and other techniques.
+/// </summary>
+public static class DataProcessingService
+{
+    public static Dictionary<int, string> CreateProductLookup(List<Product> products)
+    {
+        return products.ToDictionary(p => p.Id, p => p.Name);
+    }
+
+    public static List<int> FilterAndDoubleEvens(List<int> numbers)
+    {
+        return numbers
+            .Where(n => n % 2 == 0)
+            .Select(n => n * 2)
+            .ToList();
+    }
+
+    public static Dictionary<string, decimal> GetSalesByCategory(List<Order> orders)
+    {
+        return orders
+            .GroupBy(o => o.Category)
+            .ToDictionary(g => g.Key, g => g.Sum(o => o.Price));
+    }
+
+    public static List<Student> GetTopStudents(List<Student> students, int count = 3)
+    {
+        return students
+            .OrderByDescending(s => s.Grade)
+            .Take(count)
+            .ToList();
+    }
+}
+
+
+========================================
+FILE: Services\NumericAlgorithms.cs
+========================================
+namespace CSharpInterviewPrep.Services;
+
+/// <summary>
+/// Provides algorithms for numeric and math operations.
+/// </summary>
+public static class NumericAlgorithms
+{
+    /// <summary>
+    /// Generates the Fibonacci sequence up to the specified number of terms.
+    /// </summary>
+    public static IEnumerable<int> GenerateFibonacciSeries(int terms)
+    {
+        int a = 0, b = 1;
+        for (int i = 0; i < terms; i++)
+        {
+            yield return a;
+            int next = a + b;
+            a = b;
+            b = next;
+        }
+    }
+
+    /// <summary>
+    /// Generates a FizzBuzz sequence up to the limit.
+    /// </summary>
+    public static IEnumerable<string> GenerateFizzBuzz(int limit = 100)
+    {
+        for (int n = 1; n <= limit; n++)
+        {
+            if (n % 15 == 0) yield return "FizzBuzz";
+            else if (n % 3 == 0) yield return "Fizz";
+            else if (n % 5 == 0) yield return "Buzz";
+            else yield return n.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Multiplies numbers and returns a formatted table string.
+    /// </summary>
+    public static List<string> GetMultiplicationTable(int number, int limit = 10)
+    {
+        var table = new List<string>();
+        for (int i = 1; i <= limit; i++)
+        {
+            table.Add($"{number} x {i} = {number * i}");
+        }
+        return table;
+    }
+}
+
+
+========================================
+FILE: Services\StringAlgorithms.cs
+========================================
+using System.Text;
+
+namespace CSharpInterviewPrep.Services;
+
+/// <summary>
+/// Provides common algorithms and manipulations for strings.
+/// </summary>
+public static class StringAlgorithms
+{
+    /// <summary>
+    /// Counts the occurrences of each letter in the text (case-insensitive).
+    /// </summary>
+    /// <param name="text">The input string.</param>
+    /// <returns>A dictionary where keys are characters and values are their counts.</returns>
+    public static Dictionary<char, int> CountCharacters(string text)
+    {
+        var counts = new Dictionary<char, int>();
+        foreach (var c in text)
+        {
+            if (char.IsLetter(c))
+            {
+                var lChar = char.ToLower(c);
+                if (counts.TryGetValue(lChar, out int value))
+                {
+                    counts[lChar] = ++value;
+                }
+                else
+                {
+                    counts[lChar] = 1;
+                }
+            }
+        }
+        return counts;
+    }
+
+    /// <summary>
+    /// Finds the most frequent character in the input string.
+    /// </summary>
+    public static char GetMostFrequentChar(string input)
+    {
+        return input
+            .GroupBy(c => c)
+            .OrderByDescending(g => g.Count())
+            .First()
+            .Key;
+    }
+
+    /// <summary>
+    /// Encodes a plain text string to Base64.
+    /// </summary>
+    public static string EncodeToBase64(string plainText)
+    {
+        var bytes = Encoding.UTF8.GetBytes(plainText);
+        return Convert.ToBase64String(bytes);
+    }
+
+    /// <summary>
+    /// Decodes a Base64 encoded string back to plain text.
+    /// </summary>
+    public static string DecodeFromBase64(string base64String)
+    {
+        var bytes = Convert.FromBase64String(base64String);
+        return Encoding.UTF8.GetString(bytes);
+    }
+
+    /// <summary>
+    /// Reverses the input string using Array.Reverse.
+    /// </summary>
+    public static string ReverseString(string input)
+    {
+        char[] charArray = input.ToCharArray();
+        Array.Reverse(charArray);
+        return new string(charArray);
+    }
+
+    /// <summary>
+    /// Checks if a string is a palindrome using string reversal.
+    /// </summary>
+    public static bool IsPalindrome(string input)
+    {
+        string reversed = ReverseString(input);
+        return string.Equals(input, reversed, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Checks if a string is a palindrome using the two-pointer technique (optimized).
+    /// Ignores non-alphanumeric characters and case.
+    /// </summary>
+    public static bool IsPalindromeTwoPointer(string input)
+    {
+        if (string.IsNullOrEmpty(input) || input.Length == 1)
+        {
+            return true;
+        }
+
+        // Filter valid characters first to avoid index complexity
+        // Note: For very large strings, a custom iterator would be more memory efficient
+        // to avoid creating a new string.
+        var filtered = input.Where(char.IsLetterOrDigit).ToArray();
+        
+        int left = 0;
+        int right = filtered.Length - 1;
+
+        while (left < right)
+        {
+            if (char.ToLower(filtered[left]) != char.ToLower(filtered[right])) 
+                return false;
+            left++;
+            right--;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if two strings are anagrams of each other.
+    /// </summary>
+    public static bool AreAnagrams(string str1, string str2)
+    {
+        if (str1.Length != str2.Length) return false;
+
+        // Sorting is O(N log N). A frequency map (dictionary or array[26]) would be O(N).
+        var sortedStr1 = string.Concat(str1.OrderBy(c => c));
+        var sortedStr2 = string.Concat(str2.OrderBy(c => c));
+        return sortedStr1.Equals(sortedStr2);
+    }
+
+    /// <summary>
+    /// Returns the top 10 most common words in a text, ignoring common stop words.
+    /// </summary>
+    public static List<string> GetTop10CommonWords(string text)
+    {
+        var skipwords = new HashSet<string> { "a", "an", "the", "is", "in", "it", "of" };
+        var words = text
+            .ToLower()
+            .Split(new[] { ' ', '.', ',', ';', '?' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(word => !skipwords.Contains(word));
+
+        var wordCounts = new Dictionary<string, int>();
+        foreach (var word in words)
+        {
+            wordCounts.TryGetValue(word, out int currentCount);
+            wordCounts[word] = currentCount + 1;
+        }
+
+        return wordCounts
+            .OrderByDescending(kv => kv.Value)
+            .Take(10)
+            .Select(kv => kv.Key)
+            .ToList();
+    }
+}
+
+
+========================================
+FILE: CSharpInterviewPrep.csproj
+========================================
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj\**;bin\**;CSharpInterviewPrep.Tests\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.8" />
+	  <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.8" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="bin\**" />
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="bin\**" />
+    <None Remove="obj\**" />
+  </ItemGroup>
+
+</Project>
+
+
+
+========================================
+FILE: CSharpInterviewPrep.sln
+========================================
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36310.24
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpInterviewPrep", "CSharpInterviewPrep.csproj", "{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpInterviewPrep.Tests", "CSharpInterviewPrep.Tests\CSharpInterviewPrep.Tests.csproj", "{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Debug|x64.Build.0 = Debug|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Debug|x86.Build.0 = Debug|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Release|x64.ActiveCfg = Release|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Release|x64.Build.0 = Release|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Release|x86.ActiveCfg = Release|Any CPU
+		{AB5ED318-AEB9-CA00-71AE-5C5A097D4D1B}.Release|x86.Build.0 = Release|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Debug|x64.Build.0 = Debug|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Debug|x86.Build.0 = Debug|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Release|x64.ActiveCfg = Release|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Release|x64.Build.0 = Release|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Release|x86.ActiveCfg = Release|Any CPU
+		{210E07D0-D8D7-421E-A8C4-D846C0AFD11F}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D7022E0B-B150-4499-B3CE-E45F391C7DBA}
+	EndGlobalSection
+EndGlobal
+
+
+
+========================================
+FILE: Dockerfile
+========================================
+# Use the official .NET SDK image to build the app
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copy csproj and restore as distinct layers
+COPY ["CSharpInterviewPrep.csproj", "./"]
+RUN dotnet restore "CSharpInterviewPrep.csproj"
+
+# Copy everything else and build
+COPY . .
+WORKDIR "/src/."
+RUN dotnet build "CSharpInterviewPrep.csproj" -c Release -o /app/build
+
+# Publish the application
+FROM build AS publish
+RUN dotnet publish "CSharpInterviewPrep.csproj" -c Release -o /app/publish
+
+# Final stage/image
+FROM mcr.microsoft.com/dotnet/runtime:9.0 AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "CSharpInterviewPrep.dll"]
+
+
+========================================
+FILE: GEMINI.md
+========================================
+# Gemini Project Memories - CSharpInterviewPrep
+
+This file tracks the architectural decisions, modifications, and progress made by the Gemini AI assistant.
+
+## Current Status
+- **Phase 3: Kissterra Interview Alignment (Complete)**
+    - **Final Polish (Senior Level)**:
+        - Added `Dockerfile` for containerization support.
+        - Refactored `OrdersController` to use `ILogger<T>` (Structured Logging) instead of `Console.WriteLine`.
+        - Added `OrdersControllerTests.cs` (Integration Testing) to verify API logic + Database interactions.
+    - **Architecture & Features**:
+        - Refactored project structure: Created `Services` namespace to separate logic from presentation (MVC pattern).
+        - Added `L_MemoryManagement.cs`: Deep dive into `Span<T>`, Stack vs Heap, and Boxing/Unboxing.
+        - Added `M_AsyncStreams.cs`: Implemented `IAsyncEnumerable` and `SemaphoreSlim`.
+        - Added `N_ModernLinq.cs`: Demonstrating .NET 9 specific features.
+        - Integrated **Entity Framework Core**: Replaced `FakeDbContext` with `AppDbContext` (InMemory).
+    - **Cleanup**: Refactored `A_CoreConcepts` and `B_ProblemSolving` to use Service classes.
+
+- **Phase 2: Job Requirements Alignment (Complete)**
+    - Added `J_ConcurrencyPatterns.cs` (Producer-Consumer).
+    - Added `K_Resilience.cs` (Retry Pattern).
+    - Added `CSharpInterviewPrep.Tests` (xUnit).
+
+## Architectural Notes
+- **ORM**: Uses **Entity Framework Core** with In-Memory DB for realistic data layer simulation.
+- **Logging**: Uses `Microsoft.Extensions.Logging` for structured logs, following cloud-native best practices.
+- **Testing**: Includes both Unit Tests (Algorithms) and Integration Tests (Controller + DB).
+- **Concurrency**: `J_ConcurrencyPatterns` uses `BoundedChannel` for backpressure handling.
+
+## Key Findings & Fixes
+- **Package Compatibility**: Resolved NuGet conflicts by upgrading `Microsoft.Extensions` packages to `9.0.0`.
+- **Ambiguity**: Resolved `ILogger` naming conflict between custom interface and `Microsoft.Extensions.Logging` by using fully qualified names.
+- **Race Conditions**: Fixed using `lock` and `Interlocked` in Section 3.
+
+
+========================================
+FILE: Program.cs
+========================================
+using CSharpInterviewPrep.Exercises;
+
+Console.WriteLine("--- C# Interview Prep Exercises ---\n");
+
+// 1. Core Concepts
+A_CoreConcepts.Run();
+
+// 2. Problem Solving
+B_ProblemSolving.Run();
+
+// 3. Advanced Topics (Async)
+await C_AdvancedTopics.Run();
+
+// 4. Object Oriented Programming
+D_ObjectOrientedProgramming.Run();
+
+// 5. System Design Problems
+E_SystemDesignProblems.Run();
+
+// 6. High Performance
+F_HighPerformance.Run();
+
+// 7. Controller Challenge
+G_ControllerChallenge.Run();
+
+// 8. Middleware (Async)
+await H_Middleware.Run();
+
+// 9. Critical Concepts
+I_CriticalConcepts.Run();
+
+// 10. Concurrency Patterns (Async)
+await J_ConcurrencyPatterns.Run();
+
+// 11. Resilience & Microservices (Async)
+await K_Resilience.Run();
+
+// 12. Memory Management (Performance)
+L_MemoryManagement.Run();
+
+// 13. Async Streams & Throttling (Big Data Pattern)
+await M_AsyncStreams.Run();
+
+// 14. Modern LINQ (.NET 6-9)
+N_ModernLinq.Run();
+
+Console.WriteLine("\n--- All exercises completed successfully! ---");
+
+
+========================================
+FILE: README.md
+========================================
+# C# Interview Preparation Exercises
+
+A comprehensive collection of C# exercises and demonstrations covering topics from core concepts to advanced system design, high-performance programming, and microservices resilience.
+
+## 🏗️ Project Structure
+
+The project follows a clean architecture approach, separating business logic into reusable services.
+
+### 🛠️ Core Services (`/Services`)
+- **`StringAlgorithms`**: High-performance string manipulations and analysis.
+- **`ArrayAlgorithms`**: Efficient array operations (Merging, Rotation, Searching).
+- **`NumericAlgorithms`**: Mathematical sequences and FizzBuzz implementations.
+- **`DataProcessingService`**: LINQ-based data aggregation and filtering.
+
+### 🧪 Exercise Modules (`/Exercises`)
+1.  **Core C# Concepts**: LINQ, Collections, and basic logic.
+2.  **Problem Solving**: Anagrams, Duplicates, and Two-pointer techniques.
+3.  **Advanced Topics**: Async/Await, Race conditions, and Decorator patterns.
+4.  **OOP & Design Patterns**: Strategy, Factory, Singleton, Adapter, and Observer.
+5.  **System Design**: Large file sorting, Leaderboards, and Thread-safe counters.
+6.  **High Performance**: Zero-allocation code using `Span<T>`.
+7.  **Controller Challenge**: Real EF Core CRUD with Dependency Injection, In-Memory DB, and Structured Logging.
+8.  **Middleware Pipeline**: ASP.NET Core request/response lifecycle simulation.
+9.  **Critical Concepts**: Reflection, `IDisposable`, and `yield return`.
+10. **Concurrency Patterns**: High-throughput Producer-Consumer using `System.Threading.Channels`.
+11. **Resilience**: Implementing Retry patterns with Exponential Backoff.
+12. **Memory Management**: Stack vs Heap, Boxing costs, and `ReadOnlySpan<T>`.
+13. **Async Streams**: `IAsyncEnumerable` for Big Data and `SemaphoreSlim` for Throttling.
+14. **Modern LINQ**: New features in .NET 6-9 (`CountBy`, `AggregateBy`, `Index`).
+
+## 🚦 Prerequisites
+
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- **Docker** (Optional, for building the container)
+
+## 🚀 How to Run
+
+### Execute Exercises
+To run all demonstrations and see the console output:
+```bash
+dotnet run
+```
+
+### Run Tests
+The project includes an xUnit test suite for algorithms and the API controller:
+```bash
+dotnet test
+```
+
+### Run with Docker
+Build and run the application as a container:
+```bash
+docker build -t csharp-interview-prep .
+docker run --rm csharp-interview-prep
+```
+
+## 💎 Key Highlights
+
+- **Performance First**: Demonstrations of `Span<T>` and memory-efficient patterns.
+- **Big Data Ready**: Usage of Async Streams and Channels for high-throughput processing.
+- **Real-World ORM**: Full CRUD implementation using **Entity Framework Core**.
+- **Production Ready**: Structured Logging (`ILogger`), Integration Tests, and Docker support.
+- **Clean Code**: Adherence to SOLID principles and DRY (Don't Repeat Yourself).
+
+## 📜 Technologies Used
+
+- **.NET 9.0**
+- **Entity Framework Core 9.0** (InMemory Provider)
+- **xUnit** (Unit Testing)
+- **Microsoft.Extensions.DependencyInjection**
+- **Microsoft.Extensions.Logging**
+- **System.Threading.Channels**
+- **System.Runtime.InteropServices** (Memory Management)
+
+
