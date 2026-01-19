@@ -10,7 +10,7 @@ namespace CSharpInterviewPrep.Exercises
     public class BadRequestResult : IActionResult { }
 
     // --- Database & Models Simulation ---
-    public class DB_User { public int Id { get; set; } public string Email { get; set; } }
+    public class DB_User { public int Id { get; set; } public required string Email { get; set; } }
     public class DB_Product { public int Id { get; set; } public decimal Price { get; set; } public int Stock { get; set; } }
     public class DB_Order { public int Id { get; set; } public int UserId { get; set; } public decimal Total { get; set; } public DateTime Date { get; set; } }
 

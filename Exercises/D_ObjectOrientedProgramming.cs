@@ -1,8 +1,10 @@
-﻿using static CSharpInterviewPrep.Models.ExerciseModels;
+using Microsoft.Extensions.Caching.Memory;
+using System.Diagnostics;
+using static CSharpInterviewPrep.Models.ExerciseModels;
 
 namespace CSharpInterviewPrep.Exercises;
 
-//Strategy Factory Pattern
+// --- Part 1: Strategy Factory Pattern ---
 // 1. הגדרת החוזה (הממשק)
 public interface IShippingStrategy
 {
@@ -50,7 +52,7 @@ public static class ShippingStrategyFactory
     }
 }
 
-//Singleton Pattern
+// --- Part 2: Singleton Pattern ---
 public sealed class ConfigurationManager
 {
     private static readonly Lazy<ConfigurationManager> lazyInstance =
@@ -81,12 +83,7 @@ public sealed class ConfigurationManager
     }
 }
 
-// איך משתמשים בו מכל מקום במערכת:
-//var connectionString = ConfigurationManager.Instance.GetSetting("DatabaseConnectionString");
-
-
-
-//Adapter Pattern
+// --- Part 3: Adapter Pattern ---
 // הממשק הישן והלא תואם (למשל, מספרייה חיצונית)
 public class LegacyLogger
 {
@@ -114,15 +111,11 @@ public class LoggerAdapter : ILogger
     }
 }
 
-// איך משתמשים בו:
-// ILogger logger = new LoggerAdapter();
-// logger.Log("This message will be written by the legacy logger.");
-
-
+// --- Part 4: Observer Pattern (Events & Delegates) ---
 // ה-"נושא" (המוצר בחנות)
 public class ProductEvent
 {
-    public event EventHandler<PriceChangedEventArgs> PriceChanged;
+    public event EventHandler<PriceChangedEventArgs>? PriceChanged;
 
     private decimal _price;
     public decimal Price
@@ -148,13 +141,13 @@ public class PriceChangedEventArgs : EventArgs
 // ה-"צופה" (הלקוח שמעוניין במוצר)
 public class Customer
 {
-    public void OnPriceChanged(object sender, PriceChangedEventArgs e)
+    public void OnPriceChanged(object? sender, PriceChangedEventArgs e)
     {
         Console.WriteLine($"Price changed! Old: {e.OldPrice:C}, New: {e.NewPrice:C}. I should consider buying!");
     }
 }
 
-
+// --- Part 5: Struct vs Class ---
 public readonly struct Money
 {
     public decimal Amount { get; }
@@ -178,6 +171,8 @@ public readonly struct Money
 
     public override string ToString() => $"{Amount:F2} {Currency}";
 }
+
+// --- Part 6: Auction System (Events) ---
 public class NewBidEventArgs : EventArgs
 {
     public decimal BidAmount { get; set; }
@@ -239,6 +234,103 @@ public class Bidder
     }
 }
 
+// --- Part 7: Polymorphism & Interface Injection (Notification System) ---
+public interface INotificationSender
+{
+    Task SendAsync(string userId, string message);
+}
+
+public class EmailSender : INotificationSender
+{
+    public Task SendAsync(string userId, string message)
+    {
+        Console.WriteLine($"Email sent to {userId}: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+public class SmsSender : INotificationSender
+{
+    public Task SendAsync(string userId, string message)
+    {
+        Console.WriteLine($"SMS sent to {userId}: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+public class WhatsAppSender : INotificationSender
+{
+    public Task SendAsync(string userId, string message)
+    {
+        Console.WriteLine($"WhatsApp sent to {userId}: {message}");
+        return Task.CompletedTask;
+    }
+}
+
+public class NotificationService
+{
+    private readonly IEnumerable<INotificationSender> _senders;
+    public NotificationService(IEnumerable<INotificationSender> senders)
+    {
+        _senders = senders;
+    }
+
+    public async Task SendAllNotificationsAsync(string userId, string message)
+    {
+        await Task.WhenAll(_senders.Select(s => s.SendAsync(userId, message)));
+    }
+}
+
+// --- Part 8: Decorator Pattern (Caching) ---
+public interface IRepository
+{
+    Task<string> GetById(int id);
+}
+
+public class SlowRepository : IRepository // A "real" repository that is slow
+{
+    public async Task<string> GetById(int id)
+    {
+        Console.WriteLine($"--> Querying database for ID: {id}...");
+        await Task.Delay(2000); // Simulate slow DB call
+        return $"Data for {id}";
+    }
+}
+
+public class CachingRepository : IRepository // The decorator
+{
+    private readonly IRepository _decorated;
+    private readonly IMemoryCache _cache;
+    private MemoryCacheEntryOptions _cacheOptions;
+
+
+    public CachingRepository(IRepository decorated, IMemoryCache cache)
+    {
+        _decorated = decorated;
+        _cache = cache;
+        _cacheOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
+        };
+    }
+
+    public async Task<string> GetById(int id)
+    {
+        string cacheKey = $"data_{id}";
+        var cachedData = _cache.Get<string>(cacheKey);
+        if (cachedData != null)
+        {
+            Console.WriteLine($"--> Cache hit for ID: {id}");
+            return cachedData;
+        }
+        Console.WriteLine($"--> Cache miss for ID: {id}");
+        var data = await _decorated.GetById(id);
+        _cache.Set(cacheKey, data, _cacheOptions);
+        return data;
+    }
+}
+
+
 public static class D_ObjectOrientedProgramming
 {
     public static void Run()
@@ -298,6 +390,32 @@ public static class D_ObjectOrientedProgramming
         artPiece.PlaceBid("Charlie", 100); // אליס ובוב יקבלו התראה
         artPiece.PlaceBid("Alice", 150);   // רק בוב יקבל התראה
         artPiece.PlaceBid("Dave", 120);    // אף אחד לא יקבל התראה, ההצעה נמוכה מדי
+
+        // Moved from Advanced Topics
+        Console.WriteLine("\n--- Demonstrating Flexible Notification System ---");
+        var emailSender = new EmailSender();
+        var smsSender = new SmsSender();
+        var whatsappSender = new WhatsAppSender();
+        var notificationService = new NotificationService(new List<INotificationSender> { emailSender, smsSender, whatsappSender });
+        // NOTE: This is async but running synchronously here for simplicity in this void method, 
+        // or we could change Run to async Task.
+        notificationService.SendAllNotificationsAsync("user123", "Your order has been shipped!").Wait();
+
+        Console.WriteLine("\n--- Demonstrating Caching Decorator Pattern ---");
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        IRepository repository = new CachingRepository(new SlowRepository(), cache);
+
+        Console.WriteLine("First call (should be slow):");
+        var stopwatch = Stopwatch.StartNew();
+        stopwatch.Start();
+        repository.GetById(123).Wait();
+        stopwatch.Stop();
+        Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine("\nSecond call (should be fast and from cache):");
+        stopwatch.Restart();
+        repository.GetById(123).Wait();
+        stopwatch.Stop();
+        Console.WriteLine($"Time taken: {stopwatch.ElapsedMilliseconds} ms");
 
         Console.WriteLine("---------------------------------\n");
     }

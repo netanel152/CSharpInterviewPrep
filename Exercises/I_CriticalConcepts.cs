@@ -44,15 +44,15 @@ public static class I_CriticalConcepts
 
     public class UserProfile
     {
-        public string Username { get; set; }
+        public required string Username { get; set; }
 
         [SensitiveData] // סימנו את השדה הזה כרגיש
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         [SensitiveData]
-        public string PhoneNumber { get; set; }
+        public required string PhoneNumber { get; set; }
 
-        public string Role { get; set; }
+        public required string Role { get; set; }
     }
 
     public static void PrintSafe(object obj)

@@ -99,7 +99,11 @@ public class E_SystemDesignProblems
                     var chunk = new List<string>(chunkSize);
                     for (int i = 0; i < chunkSize && !reader.EndOfStream; i++)
                     {
-                        chunk.Add(reader.ReadLine());
+                        var line = reader.ReadLine();
+                        if (line != null)
+                        {
+                            chunk.Add(line);
+                        }
                     }
 
                     chunk.Sort(); // מיין את החלק בזיכרון

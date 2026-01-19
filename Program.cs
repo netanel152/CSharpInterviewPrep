@@ -35,4 +35,10 @@ await J_ConcurrencyPatterns.Run();
 // 11. Resilience & Microservices (Async)
 await K_Resilience.Run();
 
+// 12. Memory Management (Performance)
+L_MemoryManagement.Run();
+
+// 13. Async Streams & Throttling (Big Data Pattern)
+await M_AsyncStreams.Run();
+
 Console.WriteLine("\n--- All exercises completed successfully! ---");
