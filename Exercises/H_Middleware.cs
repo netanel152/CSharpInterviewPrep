@@ -50,18 +50,18 @@ public static class H_Middleware
         public async Task InvokeAsync(string context)
         {
             var watch = Stopwatch.StartNew();
-            Console.WriteLine($"[Performance] ⏳ Started processing: {context}");
+            Console.WriteLine($"[Performance] Started processing: {context}");
 
             // מעביר את השליטה הלאה ללוגיקה העסקית
             await _next(context);
 
             // הקוד כאן רץ *אחרי* שהלוגיקה הסתיימה
             watch.Stop();
-            Console.WriteLine($"[Performance] ✅ Finished {context}. Time: {watch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"[Performance] Finished {context}. Time: {watch.ElapsedMilliseconds} ms");
 
             if (watch.ElapsedMilliseconds > 500)
             {
-                Console.WriteLine($"[Performance] ⚠️ WARNING: Request took too long!");
+                Console.WriteLine($"[Performance] WARNING: Request took too long!");
             }
         }
     }
@@ -74,7 +74,7 @@ public static class H_Middleware
         // זה הקוד שרץ בסוף השרשרת
         RequestDelegate finalEndpoint = async (ctx) =>
         {
-            Console.WriteLine($"   --> 🏭 Executing Business Logic for {ctx}...");
+            Console.WriteLine($"   --> Executing Business Logic for {ctx}...");
 
             // סימולציה של עבודה
             await Task.Delay(100);
@@ -102,15 +102,15 @@ public static class H_Middleware
         // 2. עוטפים את הטיימר עם תופס שגיאות
         var errorMiddleware = new ErrorHandlingMiddleware(timingDelegate);
 
-        // --- Test 1: Successful Request ---
+        // Test 1: Successful Request 
         Console.WriteLine("\nTest 1: Normal Request");
         await errorMiddleware.InvokeAsync("/api/products");
 
-        // --- Test 2: Slow Request (Performance Warning) ---
+        // Test 2: Slow Request (Performance Warning) 
         Console.WriteLine("\nTest 2: Slow Request");
         await errorMiddleware.InvokeAsync("/api/heavy-report (slow)");
 
-        // --- Test 3: Crashing Request (Error Handling) ---
+        // Test 3: Crashing Request (Error Handling) 
         Console.WriteLine("\nTest 3: Crashing Request");
         await errorMiddleware.InvokeAsync("/api/buggy-feature (crash)");
 

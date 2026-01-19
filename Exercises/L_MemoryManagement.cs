@@ -1,13 +1,10 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace CSharpInterviewPrep.Exercises;
 
 public static class L_MemoryManagement
 {
-    // ==========================================
     // 1. Span<T> and StackAlloc (Zero Allocation Slicing)
-    // ==========================================
     // רלוונטי לביצועים גבוהים: מניעת הקצאות זיכרון מיותרות ב-Heap
     // Scenario: Parsing a large string (e.g., Log entry, DNA sequence, CSV line) without creating new substrings.
 
@@ -36,9 +33,7 @@ public static class L_MemoryManagement
         Console.WriteLine($"   Parsed Date: {day}/{month}/{year} (Zero String Allocations!)");
     }
 
-    // ==========================================
     // 2. Struct vs Class (Stack vs Heap) & Boxing
-    // ==========================================
     // Scenario: High-frequency data structures (e.g., Coordinates, Points in a game/map).
 
     struct PointStruct { public int X, Y; }
@@ -70,9 +65,8 @@ public static class L_MemoryManagement
         Console.WriteLine($"   Struct (Stack) time: {sw.ElapsedMilliseconds}ms (Much faster!)");
     }
 
-    // ==========================================
+    
     // 3. Boxing & Unboxing (Hidden Cost)
-    // ==========================================
     // מלכודת נפוצה: המרת Value Type ל-Reference Type (Object/Interface)
 
     public static void BoxingDemo()

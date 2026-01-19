@@ -4,9 +4,7 @@ namespace CSharpInterviewPrep.Exercises;
 
 public static class I_CriticalConcepts
 {
-    // ==========================================
-    // 1. Yield Return (Lazy Evaluation)
-    // ==========================================
+    // 1. Yield Return (Lazy Evaluation)    
     // תרחיש: יש לנו לוג עצום (מיליון שורות). אנחנו לא רוצים לטעון את כולו לזיכרון.
     // Yield Return מאפשר לנו "להזרים" את המידע שורה אחרי שורה.
 
@@ -34,9 +32,8 @@ public static class I_CriticalConcepts
         return list;
     }
 
-    // ==========================================
+    
     // 2. Reflection & Custom Attributes
-    // ==========================================
     // תרחיש: מערכת מרקטינג שצריכה להסתיר מידע רגיש (PII) באופן אוטומטי בהדפסה.
 
     [AttributeUsage(AttributeTargets.Property)]
@@ -75,9 +72,7 @@ public static class I_CriticalConcepts
         }
     }
 
-    // ==========================================
-    // 3. IDisposable Pattern (Correct Implementation)
-    // ==========================================
+    // 3. IDisposable Pattern
     // תרחיש: מחלקה שמחזיקה משאב חיצוני (כמו קובץ פתוח או חיבור רשת) וחייבת לשחרר אותו.
 
     public class DatabaseConnectionHandler : IDisposable

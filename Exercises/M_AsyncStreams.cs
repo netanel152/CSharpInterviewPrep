@@ -4,10 +4,9 @@ namespace CSharpInterviewPrep.Exercises;
 
 public static class M_AsyncStreams
 {
-    // ==========================================
-    // Scenario: Streaming Big Data to Frontend
-    // ==========================================
-    // In a "Big Data" environment (Kissterra), you often need to send large datasets 
+    
+    // Scenario: Streaming Big Data to Frontend    
+    // In a "Big Data" environment, you often need to send large datasets 
     // to the client (React) without loading everything into memory (RAM) or blocking the request.
     // IAsyncEnumerable allows you to "stream" data item by item as it becomes available.
 
@@ -37,9 +36,7 @@ public static class M_AsyncStreams
         Console.WriteLine("   Stream finished.");
     }
 
-    // ==========================================
     // Scenario: Throttling / Rate Limiting Parallel Requests
-    // ==========================================
     // When dealing with many external APIs (Insurance providers), you can't just 
     // fire 1000 requests at once. You need SemaphoreSlim to throttle.
 
